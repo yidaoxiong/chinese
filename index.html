@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f6efe5" />
+  <title>五上语文·记忆卡</title>
+  <link rel="stylesheet" href="styles.css?v=20260803-1" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="五上语文记忆卡首页"><span class="brand-mark">文</span><div><small>ANKI 式间隔复习</small><h1>五上语文·记忆卡</h1></div></a>
+      <div class="top-actions"><div class="today-pill"><span>今日打卡</span><strong id="todayCount">0</strong><em>/ 20</em></div><button id="accountButton" class="account-button" type="button">登录 / 注册</button></div>
+    </header>
+
+    <section id="authPanel" class="panel auth-panel hidden">
+      <div class="section-head"><div><p class="eyebrow">学习账号</p><h2>和 maths.slashbro.top 共用账号</h2></div><button id="closeAuthButton" class="icon-button" type="button" aria-label="关闭">×</button></div>
+      <div id="authLoggedOut"><p class="hint">注册或登录同一套账号，复习节奏就能在设备之间同步。第一次使用可直接点“注册并登录”。</p><form id="authForm"><label>账号<input id="usernameInput" autocomplete="username" maxlength="24" placeholder="3-24 个字母、数字或汉字" required /></label><label>密码<input id="passwordInput" type="password" autocomplete="current-password" minlength="8" maxlength="72" placeholder="至少 8 位" required /></label><div class="auth-actions"><button class="primary" type="submit">登录</button><button id="registerButton" class="secondary" type="button">注册并登录</button></div></form><p id="authMessage" class="message">未登录也可以试做，但登录后才能同步复习记录。</p></div>
+      <div id="authLoggedIn" class="hidden"><p class="welcome">你好，<strong id="accountName"></strong>！</p><p class="hint">你的复习记录和每日进度会自动同步。</p><button id="logoutButton" class="secondary" type="button">退出登录</button></div>
+    </section>
+
+    <section class="hero panel">
+      <div class="hero-copy"><p class="eyebrow">背诵 · 识字 · 写字 · 词语</p><h2>每天 20 张卡，<br /><span>把课本记成自己的。</span></h2><p>先回忆，再翻面确认；选出真实感受，让难卡更快回来，熟卡慢慢拉开间隔。</p><div class="hero-tags"><span>背诵最多 3 题</span><span>其余随机抽取</span><span>坚持到 8 月 31 日</span></div><button id="startButton" class="primary large" type="button">开始今天的打卡 <span>→</span></button></div>
+      <div class="hero-art" aria-hidden="true"><div class="paper-card"><span>第 12 课</span><b>少年<br />中国说</b><i>✦</i></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="ink-dot dot-one"></div><div class="ink-dot dot-two"></div></div>
+    </section>
+
+    <section class="dashboard"><div class="stat panel"><span>今日完成</span><strong id="todayStudyCount">0</strong><small>张卡片</small></div><div class="stat panel"><span>待复习</span><strong id="dueCount">—</strong><small>张卡片</small></div><div class="stat panel"><span>已掌握</span><strong id="learnedCount">—</strong><small>张卡片</small></div><div class="stat panel"><span>总卡片</span><strong id="totalCount">—</strong><small>张卡片</small></div></section>
+
+    <section id="goalPanel" class="panel goal"><div class="goal-head"><div><p class="eyebrow">8 月打卡目标</p><h2>每天完成 20 道题</h2><p>从现在开始，到 8 月 31 日坚持每天复习。</p></div><div class="today-goal"><strong id="goalCount">0 / 20</strong><span id="goalStatus">今日进度</span></div></div><div class="goal-progress"><span id="goalProgressBar"></span></div><div class="goal-summary"><div><span>连续打卡</span><strong id="goalStreak">0</strong><small>天</small></div><div><span>已完成</span><strong id="goalCompletedDays">0</strong><small>天</small></div><div><span>距截止</span><strong id="goalRemainingDays">—</strong><small>天</small></div></div><div id="checkinCalendar" class="checkin-calendar"></div></section>
+
+    <section id="recentPanel" class="panel recent"><div class="recent-head"><div><p class="eyebrow">学习档案</p><h2>最近 7 天</h2></div><p>“记住”和“简单”会让下一次复习间隔更久。</p></div><div class="history-table-wrap"><table class="history-table"><thead><tr><th>日期</th><th>学习量</th><th>记住量</th><th>状态</th></tr></thead><tbody id="historyRows"></tbody></table></div></section>
+
+    <section id="studyPanel" class="panel study hidden"><div class="study-top"><button id="backButton" class="back" type="button">← 返回</button><span id="studyCount">今日第 1 / 20 张</span><span id="studyTimer">本轮专注</span></div><div class="progress-track"><span id="studyProgressBar"></span></div><div id="card" class="card"><div class="card-meta"><span id="cardKind">背诵卡</span><span id="cardSource">—</span></div><h2 id="cardTitle">准备好了吗？</h2><div id="questionText" class="question-text"></div><button id="showAnswerButton" class="primary show-answer" type="button">翻面看答案 <span>↘</span></button><div id="answerReveal" class="answer-reveal hidden"><div class="answer-label">答案</div><div id="answerText" class="answer-text"></div><p class="rating-title">这张卡的感觉如何？</p><div class="ratings"><button data-rating="again" class="again" type="button">重来<small>10 分钟</small></button><button data-rating="hard" class="hard" type="button">困难<small>较快复习</small></button><button data-rating="good" class="good" type="button">记住<small>正常间隔</small></button><button data-rating="easy" class="easy" type="button">简单<small>更久以后</small></button></div></div></div><div id="completeState" class="complete hidden"><span>✦</span><h2>今日打卡完成！</h2><p>20 张卡已经走过一遍，明天它们会按记忆节奏回来。</p><button id="completeBackButton" class="primary" type="button">查看学习状态</button></div></section>
+
+    <section class="how panel"><p class="eyebrow">怎么记得更牢</p><h2>回忆，是记忆真正发生的地方。</h2><div><article><b>1</b><p>先看提示，尽量从脑中取回答案。</p></article><article><b>2</b><p>翻面后核对原文、拼音、释义和例句。</p></article><article><b>3</b><p>如实评级，困难的卡片会更快回来。</p></article></div></section>
+    <footer>五上语文学习网页 · 内容整理自所附背诵、识字、写字、词语资料</footer>
+  </main>
+  <script type="module" src="app.js?v=20260803-1"></script>
+</body>
+</html>
