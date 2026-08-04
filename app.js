@@ -65,6 +65,14 @@ function selectedFilters() {
   return new Set([...document.querySelectorAll('[data-study-filter]:checked')].map((input) => input.value));
 }
 
+function selectedOrder() {
+  return document.querySelector('[name="card-order"]:checked')?.value || 'random';
+}
+
+function arrangeCards(list) {
+  return selectedOrder() === 'sequential' ? [...list] : shuffle(list);
+}
+
 function syncFilterControls() {
   const filters = [...document.querySelectorAll('[data-study-filter]')];
   const selected = filters.filter((input) => input.checked).length;
@@ -121,7 +129,7 @@ function isDue(card) {
 function buildSession(isExtra = false) {
   const filters = selectedFilters();
   const selectedCards = cards.filter((card) => filters.has(filterKey(card)) && !state.usedTodayIds.has(card.id));
-  const due = shuffle(selectedCards.filter(isDue));
+  const due = arrangeCards(selectedCards.filter(isDue));
   const reviewedRecite = logsForDate(dateKey()).filter((log) => log.category === 'recite').length;
   const reciteLimit = Math.max(0, MAX_DAILY_RECITE - reviewedRecite);
   const recite = due.filter((card) => card.category === 'recite').slice(0, reciteLimit);
@@ -129,12 +137,12 @@ function buildSession(isExtra = false) {
   let selected = [...recite, ...other];
   if (selected.length < GOAL) {
     const reciteCount = selected.filter((card) => card.category === 'recite').length;
-    const backupRecite = shuffle(selectedCards.filter((card) => card.category === 'recite' && !selected.includes(card))).slice(0, Math.max(0, reciteLimit - reciteCount));
+    const backupRecite = arrangeCards(selectedCards.filter((card) => card.category === 'recite' && !selected.includes(card))).slice(0, Math.max(0, reciteLimit - reciteCount));
     selected = [...selected, ...backupRecite];
-    const remaining = shuffle(selectedCards.filter((card) => !selected.includes(card) && (card.category !== 'recite' || reciteCount + backupRecite.length < reciteLimit))).slice(0, GOAL - selected.length);
+    const remaining = arrangeCards(selectedCards.filter((card) => !selected.includes(card) && (card.category !== 'recite' || reciteCount + backupRecite.length < reciteLimit))).slice(0, GOAL - selected.length);
     selected = [...selected, ...remaining];
   }
-  return { cards: shuffle(selected).slice(0, GOAL), index: 0, startedAt: Date.now(), answered: false, isExtra };
+  return { cards: arrangeCards(selected).slice(0, GOAL), index: 0, startedAt: Date.now(), answered: false, isExtra };
 }
 
 function progressForRating(old, rating) {
