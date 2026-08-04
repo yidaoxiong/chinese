@@ -1,13 +1,14 @@
 import { reciteCards, recognitionSeeds, writingItems, vocabItems } from './data.js';
 
 const GOAL = 20;
+const MAX_DAILY_RECITE = 3;
 const END_DATE = '2026-08-31';
 const CLIENT_KEY = 'chinese_client_id';
 const LOCAL_STATE_KEY = 'chinese_card_progress_v1';
 const LOCAL_LOG_KEY = 'chinese_review_log_v1';
 
 const $ = (id) => document.getElementById(id);
-const state = { user: null, cardProgress: {}, logs: [], session: null, serverStats: [] };
+const state = { user: null, cardProgress: {}, logs: [], session: null, serverStats: [], usedTodayIds: new Set() };
 
 const charMeanings = {
   鹭: '白鹭，一种羽毛白色的水鸟。', 嫌: '嫌弃，认为不合意或不喜欢。', 嵌: '把较小的东西卡进较大东西的空隙里。', 匣: '收藏东西的器具，通常呈小盒状。', 嗜: '特别爱好，爱好得近乎成癖。',
@@ -44,11 +45,33 @@ const meaningForChar = (char, group) => charMeanings[char] || `在“${group}”
 const sentenceFor = (word) => `例句：我们在课文中读到了“${word}”，并试着用它说一句完整的话。`;
 
 const cards = [
-  ...reciteCards.map((card) => ({ ...card, category: 'recite', label: card.kind === 'idiom' ? '成语背诵' : card.kind === 'quote' ? '名人语录' : card.kind === 'poem' ? '古诗背诵' : '课文背诵' })),
+  ...reciteCards.map((card) => ({ ...card, category: 'recite', label: card.kind === 'idiom' ? '成语背诵' : card.kind === 'quote' ? '名人语录' : card.kind === 'poem' ? '诗词背诵' : card.id.startsWith('article-') ? '课文背诵' : '其他背诵' })),
   ...recognitionSeeds.map(([char, pinyin, group], index) => ({ id: `recognition-${index + 1}-${char}`, category: 'recognition', label: '识字表', source: '识字表', char, pinyin, group })),
   ...writingItems.map((item, index) => ({ id: `writing-${index + 1}-${item.char}`, category: 'writing', label: '写字表', source: item.lesson, ...item })),
   ...vocabItems.map((item, index) => ({ id: `vocab-${index + 1}-${item.word}`, category: 'vocab', label: '词语表', source: item.lesson, ...item }))
 ];
+
+function filterKey(card) {
+  if (card.category === 'recognition') return 'recognition';
+  if (card.category === 'writing') return 'writing';
+  if (card.category === 'vocab') return 'vocab';
+  if (card.kind === 'poem') return 'recite-poem';
+  if (card.kind === 'idiom') return 'recite-idiom';
+  if (card.kind === 'article' && card.id.startsWith('article-')) return 'recite-article';
+  return 'recite-other';
+}
+
+function selectedFilters() {
+  return new Set([...document.querySelectorAll('[data-study-filter]:checked')].map((input) => input.value));
+}
+
+function syncFilterControls() {
+  const filters = [...document.querySelectorAll('[data-study-filter]')];
+  const selected = filters.filter((input) => input.checked).length;
+  $('selectAllFilters').checked = selected === filters.length;
+  $('selectAllFilters').indeterminate = selected > 0 && selected < filters.length;
+  $('filterHint').textContent = selected ? `已选择 ${selected} 类内容；背诵类当天最多 ${MAX_DAILY_RECITE} 道。` : '请至少选择一类内容；背诵类当天最多 3 道。';
+}
 
 function dateKey(date = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
@@ -77,10 +100,17 @@ function shuffle(list) {
 }
 
 function cardQuestion(card) {
-  if (card.category === 'recite') return { title: card.title, prompt: card.prompt, answer: card.answer };
+  if (card.category === 'recite') {
+    if (card.kind === 'idiom') {
+      const meaning = card.answer.split('释义：')[1] || '';
+      return { title: '成语｜首字拼音与含义', prompt: `${card.prompt}\n成语含义：${meaning}\n\n请写出这个成语。`, answer: card.answer };
+    }
+    if (card.kind === 'poem') return { title: card.title, prompt: '根据诗词名字，写出诗词完整内容及作者和朝代。', answer: card.answer };
+    return { title: card.title, prompt: card.prompt, answer: card.answer };
+  }
   if (card.category === 'recognition') return { title: `识字表｜${card.char}`, prompt: `字：${card.char}\n组词：${card.group}\n\n请说出这个字的拼音和字义，再解释组词。`, answer: `拼音：${card.pinyin}\n字义：${meaningForChar(card.char, card.group)}\n组词：${card.group}\n组词释义：${meaningForWord(card.group)}` };
-  if (card.category === 'writing') { const group = card.group || `${card.char}（请结合课文组词）`; const groupPinyin = card.groupPinyin || card.pinyin; return { title: `写字表｜${card.char}`, prompt: `字的拼音：${card.pinyin}\n组词的拼音：${groupPinyin}\n\n请写出汉字，并说出字义和组词释义。`, answer: `字：${card.char}\n字义：${meaningForChar(card.char, group)}\n组词：${group}\n组词释义：${meaningForWord(group)}` }; }
-  return { title: `词语表｜${card.word}`, prompt: `词语的拼音：${card.pinyin}\n\n请写出词语，并说出释义和造句。`, answer: `词语：${card.word}\n释义：${meaningForWord(card.word)}\n造句：${sentenceFor(card.word)}` };
+  if (card.category === 'writing') { const group = card.group || `${card.char}（请结合课文组词）`; const groupPinyin = card.groupPinyin || card.pinyin; return { title: '写字表｜根据拼音写字', prompt: `字的拼音：${card.pinyin}\n组词的拼音：${groupPinyin}\n\n请写出汉字，并说出字义和组词释义。`, answer: `字：${card.char}\n字义：${meaningForChar(card.char, group)}\n组词：${group}\n组词释义：${meaningForWord(group)}` }; }
+  return { title: '词语表｜根据拼音写词语', prompt: `词语拼音：${card.pinyin}\n\n请写出词语，并说出释义和造句。`, answer: `词语：${card.word}\n释义：${meaningForWord(card.word)}\n造句：${sentenceFor(card.word)}` };
 }
 
 function isDue(card) {
@@ -88,19 +118,23 @@ function isDue(card) {
   return !progress || !progress.dueAt || new Date(progress.dueAt).getTime() <= Date.now();
 }
 
-function buildSession() {
-  const due = shuffle(cards.filter(isDue));
-  const recite = due.filter((card) => card.category === 'recite').slice(0, 3);
+function buildSession(isExtra = false) {
+  const filters = selectedFilters();
+  const selectedCards = cards.filter((card) => filters.has(filterKey(card)) && !state.usedTodayIds.has(card.id));
+  const due = shuffle(selectedCards.filter(isDue));
+  const reviewedRecite = logsForDate(dateKey()).filter((log) => log.category === 'recite').length;
+  const reciteLimit = Math.max(0, MAX_DAILY_RECITE - reviewedRecite);
+  const recite = due.filter((card) => card.category === 'recite').slice(0, reciteLimit);
   const other = due.filter((card) => card.category !== 'recite').slice(0, GOAL - recite.length);
   let selected = [...recite, ...other];
   if (selected.length < GOAL) {
     const reciteCount = selected.filter((card) => card.category === 'recite').length;
-    const backupRecite = shuffle(cards.filter((card) => card.category === 'recite' && !selected.includes(card))).slice(0, Math.max(0, 3 - reciteCount));
+    const backupRecite = shuffle(selectedCards.filter((card) => card.category === 'recite' && !selected.includes(card))).slice(0, Math.max(0, reciteLimit - reciteCount));
     selected = [...selected, ...backupRecite];
-    const remaining = shuffle(cards.filter((card) => !selected.includes(card) && (card.category !== 'recite' || reciteCount + backupRecite.length < 3))).slice(0, GOAL - selected.length);
+    const remaining = shuffle(selectedCards.filter((card) => !selected.includes(card) && (card.category !== 'recite' || reciteCount + backupRecite.length < reciteLimit))).slice(0, GOAL - selected.length);
     selected = [...selected, ...remaining];
   }
-  return { cards: shuffle(selected).slice(0, GOAL), index: 0, startedAt: Date.now(), answered: false };
+  return { cards: shuffle(selected).slice(0, GOAL), index: 0, startedAt: Date.now(), answered: false, isExtra };
 }
 
 function progressForRating(old, rating) {
@@ -159,15 +193,19 @@ function renderHistory() {
   $('historyRows').innerHTML = rows.join('');
 }
 
-function openStudy() {
-  state.session = buildSession();
-  if (state.session.cards.length < GOAL) { alert('题库数量不足，无法生成今日 20 道题。'); return; }
+function startStudy(isExtra = false) {
+  if (!selectedFilters().size) { alert('请至少选择一类学习内容。'); return; }
+  state.session = buildSession(isExtra);
+  if (state.session.cards.length < GOAL) { alert('当前选择无法生成 20 道不重复题。背诵类每天最多 3 道，请同时选择至少一种非背诵内容，或勾选更多内容。'); return; }
+  state.session.cards.forEach((card) => state.usedTodayIds.add(card.id));
   $('studyPanel').classList.remove('hidden'); $('card').classList.remove('hidden'); $('completeState').classList.add('hidden'); showCurrentCard(); $('studyPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function openStudy() { state.usedTodayIds = new Set(); startStudy(false); }
+
 function showCurrentCard() {
   const session = state.session; const card = session.cards[session.index]; const question = cardQuestion(card);
-  $('studyCount').textContent = `今日第 ${session.index + 1} / ${GOAL} 张`; $('studyProgressBar').style.width = `${session.index / GOAL * 100}%`; $('cardKind').textContent = `${question.title.split('｜')[0]} · ${card.label}`; $('cardSource').textContent = card.source || '五上语文'; $('cardTitle').textContent = question.title; $('questionText').textContent = question.prompt; $('answerText').textContent = question.answer; $('answerReveal').classList.add('hidden'); $('showAnswerButton').classList.remove('hidden'); session.answered = false;
+  $('studyCount').textContent = `${session.isExtra ? '加练' : '今日'}第 ${session.index + 1} / ${GOAL} 张`; $('studyTimer').textContent = session.isExtra ? '额外复习' : '本轮专注'; $('studyProgressBar').style.width = `${session.index / GOAL * 100}%`; $('cardKind').textContent = `${question.title.split('｜')[0]} · ${card.label}`; $('cardSource').textContent = card.source || '五上语文'; $('cardTitle').textContent = question.title; $('questionText').textContent = question.prompt; $('answerText').textContent = question.answer; $('answerReveal').classList.add('hidden'); $('showAnswerButton').classList.remove('hidden'); session.answered = false;
 }
 
 async function rateCurrent(rating) {
@@ -176,8 +214,13 @@ async function rateCurrent(rating) {
   catch (error) { $('authMessage').textContent = error.message; }
 }
 
-function finishStudy() { $('card').classList.add('hidden'); $('completeState').classList.remove('hidden'); $('studyProgressBar').style.width = '100%'; refreshDashboard(); }
-function closeStudy() { $('studyPanel').classList.add('hidden'); state.session = null; refreshDashboard(); }
+function finishStudy() {
+  const isExtra = state.session?.isExtra;
+  $('completeTitle').textContent = isExtra ? '本轮加练完成！' : '今日打卡完成！';
+  $('completeMessage').textContent = isExtra ? `又完成了 20 张，今天已复习 ${logsForDate(dateKey()).length} 张卡。` : '20 张卡已经走过一遍；需要的话，可以再增加 20 张。';
+  $('card').classList.add('hidden'); $('completeState').classList.remove('hidden'); $('studyProgressBar').style.width = '100%'; refreshDashboard();
+}
+function closeStudy() { $('studyPanel').classList.add('hidden'); state.session = null; state.usedTodayIds = new Set(); refreshDashboard(); }
 
 function encodeBytes(bytes) { let binary = ''; bytes.forEach((byte) => { binary += String.fromCharCode(byte); }); return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', ''); }
 function newSalt() { const bytes = new Uint8Array(16); crypto.getRandomValues(bytes); return encodeBytes(bytes); }
@@ -201,7 +244,14 @@ async function loadProgress() {
   const response = await fetch('/api/progress'); if (!response.ok) return; const result = await response.json();
   state.cardProgress = Object.fromEntries((result.cards || []).map((item) => [item.cardId, { repetitions: item.repetitions, easeFactor: item.easeFactor, intervalDays: item.intervalDays, dueAt: item.dueAt, reviewedAt: item.reviewedAt }]));
   state.serverStats = result.dailyStats || [];
-  const serverLogs = state.serverStats.flatMap((day) => Array.from({ length: Number(day.learned || 0) }, () => ({ date: day.date, rating: 'good' })));
+  const serverLogs = state.serverStats.flatMap((day) => {
+    const recite = Number(day.recite || 0);
+    const remaining = Math.max(0, Number(day.learned || 0) - recite);
+    return [
+      ...Array.from({ length: recite }, () => ({ date: day.date, category: 'recite', rating: 'good' })),
+      ...Array.from({ length: remaining }, () => ({ date: day.date, category: 'other', rating: 'good' }))
+    ];
+  });
   state.logs = [...state.logs.filter((log) => log.date > END_DATE || !state.serverStats.some((day) => day.date === log.date)), ...serverLogs]; saveLocal(); refreshDashboard();
 }
 
@@ -217,10 +267,15 @@ document.addEventListener('click', (event) => {
 $('startButton').addEventListener('click', openStudy);
 $('backButton').addEventListener('click', closeStudy);
 $('completeBackButton').addEventListener('click', closeStudy);
+$('addTwentyButton').addEventListener('click', () => startStudy(true));
+$('selectAllFilters').addEventListener('change', (event) => { document.querySelectorAll('[data-study-filter]').forEach((input) => { input.checked = event.target.checked; }); syncFilterControls(); });
+$('clearFilters').addEventListener('click', () => { document.querySelectorAll('[data-study-filter]').forEach((input) => { input.checked = false; }); syncFilterControls(); });
+document.querySelectorAll('[data-study-filter]').forEach((input) => input.addEventListener('change', syncFilterControls));
 $('accountButton').addEventListener('click', () => $('authPanel').classList.toggle('hidden'));
 $('closeAuthButton').addEventListener('click', () => $('authPanel').classList.add('hidden'));
 $('authForm').addEventListener('submit', (event) => { event.preventDefault(); void authRequest('login').catch((error) => { $('authMessage').textContent = error.message; }); });
 $('registerButton').addEventListener('click', () => { void authRequest('register').catch((error) => { $('authMessage').textContent = error.message; }); });
 $('logoutButton').addEventListener('click', async () => { await fetch('/api/auth', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }); state.user = null; $('accountButton').textContent = '登录 / 注册'; $('authLoggedOut').classList.remove('hidden'); $('authLoggedIn').classList.add('hidden'); readLocal(); refreshDashboard(); });
 
+syncFilterControls();
 void initAuth();
