@@ -37,7 +37,7 @@ export async function onRequestGet({ request, env }) {
   if (!user) return json({ error: '请先登录。' }, 401);
   const [{ results: cards }, { results: dailyStats }] = await Promise.all([
     env.DB.prepare('SELECT card_id AS cardId, category, repetitions, ease_factor AS easeFactor, interval_days AS intervalDays, due_at AS dueAt, reviewed_at AS reviewedAt FROM chinese_card_progress WHERE user_id = ?').bind(user.id).all(),
-    env.DB.prepare("SELECT study_date AS date, COUNT(*) AS learned, SUM(CASE WHEN rating IN ('good', 'easy') THEN 1 ELSE 0 END) AS remembered FROM chinese_review_log WHERE user_id = ? GROUP BY study_date ORDER BY study_date DESC LIMIT 60").bind(user.id).all(),
+    env.DB.prepare("SELECT study_date AS date, COUNT(*) AS learned, SUM(CASE WHEN rating IN ('good', 'easy') THEN 1 ELSE 0 END) AS remembered, SUM(CASE WHEN category = 'recite' THEN 1 ELSE 0 END) AS recite FROM chinese_review_log WHERE user_id = ? GROUP BY study_date ORDER BY study_date DESC LIMIT 60").bind(user.id).all(),
   ]);
   return json({ cards, dailyStats, now: new Date().toISOString() });
 }
