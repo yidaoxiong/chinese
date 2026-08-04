@@ -64,6 +64,10 @@ button { cursor: pointer; }
 .filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 19px; }
 .filter-option { min-height: 46px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 13px; background: #fffaf5; color: #574e49; font-size: 14px; transition: border-color .2s, background .2s; }
 .filter-option:has(input:checked) { border-color: #e4a179; background: #fdf0e5; color: var(--orange-deep); font-weight: 700; }
+.order-picker { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 15px; color: #6f6259; font-size: 13px; }
+.order-picker > span { margin-right: 3px; font-weight: 700; }
+.order-option { display: inline-flex; align-items: center; gap: 6px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 10px; background: #fffaf5; cursor: pointer; }
+.order-option:has(input:checked) { border-color: #e4a179; background: #fdf0e5; color: var(--orange-deep); font-weight: 700; }
 .filter-hint { margin-top: 14px; }
 .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 18px 0; }
 .stat { padding: 18px 20px; }
