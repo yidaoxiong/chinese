@@ -52,6 +52,19 @@ button { cursor: pointer; }
 .primary:hover { background: var(--orange-deep); transform: translateY(-1px); }
 .primary.large { padding: 14px 20px; font-weight: 800; font-size: 15px; }
 .primary span { margin-left: 12px; font-size: 18px; }
+.content-picker { margin-top: 18px; padding: 25px 32px; }
+.content-picker-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.content-picker h2 { margin: 6px 0; font-family: Georgia, "Songti SC", serif; font-size: 24px; }
+.content-picker-head p:not(.eyebrow), .filter-hint { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.content-picker-actions { display: flex; align-items: center; gap: 9px; }
+.select-all, .filter-option { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.select-all { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fffaf5; color: #6f6259; font-size: 13px; }
+.compact { padding: 10px 12px; font-size: 13px; }
+.content-picker input { accent-color: var(--orange); }
+.filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 19px; }
+.filter-option { min-height: 46px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 13px; background: #fffaf5; color: #574e49; font-size: 14px; transition: border-color .2s, background .2s; }
+.filter-option:has(input:checked) { border-color: #e4a179; background: #fdf0e5; color: var(--orange-deep); font-weight: 700; }
+.filter-hint { margin-top: 14px; }
 .dashboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 18px 0; }
 .stat { padding: 18px 20px; }
 .stat span, .stat small { display: block; color: var(--muted); font-size: 12px; }
@@ -109,6 +122,7 @@ button { cursor: pointer; }
 .complete > span { color: var(--yellow); font-size: 35px; }
 .complete h2 { margin: 16px 0 7px; font-family: Georgia, "Songti SC", serif; font-size: 28px; }
 .complete p { color: var(--muted); margin: 0 0 22px; }
+.complete-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
 .how { margin-top: 18px; padding: 27px 32px; }
 .how > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin-top: 20px; }
 .how article { display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: #fbf3e9; border-radius: 15px; }
@@ -140,6 +154,10 @@ footer { margin-top: 27px; color: #a2958a; text-align: center; font-size: 11px; 
   .dashboard { grid-template-columns: repeat(2, 1fr); }
   .goal, .recent, .how, .study { padding-left: 20px; padding-right: 20px; }
   .goal-head, .recent-head { display: block; }
+  .content-picker { padding: 22px 20px; }
+  .content-picker-head { display: block; }
+  .content-picker-actions { margin-top: 14px; }
+  .filter-grid { grid-template-columns: repeat(2, 1fr); }
   .today-goal { margin-top: 13px; text-align: left; }
   .checkin-calendar { grid-template-columns: repeat(10, 1fr); }
   .how > div { grid-template-columns: 1fr; }
