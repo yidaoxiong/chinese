@@ -28,11 +28,28 @@ async function ensureProgress(db) {
     )`),
     db.prepare('CREATE INDEX IF NOT EXISTS chinese_card_progress_due_idx ON chinese_card_progress(user_id, due_at)'),
     db.prepare('CREATE INDEX IF NOT EXISTS chinese_review_log_user_date_idx ON chinese_review_log(user_id, study_date)'),
+    db.prepare(`CREATE TABLE IF NOT EXISTS chinese_progress_maintenance (
+      task_name TEXT PRIMARY KEY,
+      completed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`),
+  ]);
+}
+
+async function retainOnlyAlexProgress(db) {
+  const completed = await db.prepare("SELECT task_name FROM chinese_progress_maintenance WHERE task_name = 'retain-alex-progress-v1' LIMIT 1").first();
+  if (completed) return;
+  const alex = await db.prepare("SELECT id FROM users WHERE username = 'alex' LIMIT 1").first();
+  if (!alex) return;
+  await db.batch([
+    db.prepare('DELETE FROM chinese_card_progress WHERE user_id != ?').bind(alex.id),
+    db.prepare('DELETE FROM chinese_review_log WHERE user_id != ?').bind(alex.id),
+    db.prepare("INSERT OR IGNORE INTO chinese_progress_maintenance (task_name) VALUES ('retain-alex-progress-v1')"),
   ]);
 }
 
 export async function onRequestGet({ request, env }) {
   await ensureAuthTables(env.DB); await ensureProgress(env.DB);
+  await retainOnlyAlexProgress(env.DB);
   const user = await getSessionUser(request, env.DB);
   if (!user) return json({ error: '请先登录。' }, 401);
   const [{ results: cards }, { results: dailyStats }] = await Promise.all([
@@ -46,6 +63,7 @@ export async function onRequestPost({ request, env }) {
   const body = await request.json().catch(() => null);
   if (!body || typeof body.cardId !== 'string' || body.cardId.length < 3 || body.cardId.length > 180 || !allowedCategories.has(body.category) || !/^\d{4}-\d{2}-\d{2}$/.test(body.date) || !allowedRatings.has(body.rating)) return json({ error: '无效复习记录。' }, 400);
   await ensureAuthTables(env.DB); await ensureProgress(env.DB);
+  await retainOnlyAlexProgress(env.DB);
   const user = await getSessionUser(request, env.DB); if (!user) return json({ error: '请先登录。' }, 401);
   const old = await env.DB.prepare('SELECT repetitions, ease_factor AS easeFactor, interval_days AS intervalDays FROM chinese_card_progress WHERE user_id = ? AND card_id = ?').bind(user.id, body.cardId).first();
   let repetitions = Number(old?.repetitions || 0); let ease = Number(old?.easeFactor || 2.5); let interval = Number(old?.intervalDays || 0);
