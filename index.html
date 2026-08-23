@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f6efe5" />
   <title>五上语文·记忆卡</title>
-  <link rel="stylesheet" href="styles.css?v=20260804-3" />
+  <link rel="stylesheet" href="styles.css?v=20260824-1" />
 </head>
 <body>
   <main class="shell">
@@ -21,12 +21,12 @@
     </section>
 
     <section class="hero panel">
-      <div class="hero-copy"><p class="eyebrow">背诵 · 识字 · 写字 · 词语</p><h2>每天 20 张卡，<br /><span>把课本记成自己的。</span></h2><p>先回忆，再翻面确认；选出真实感受，让难卡更快回来，熟卡慢慢拉开间隔。</p><div class="hero-tags"><span>背诵最多 3 题</span><span>其余随机抽取</span><span>坚持到 8 月 31 日</span></div><button id="startButton" class="primary large" type="button">开始今天的打卡 <span>→</span></button></div>
+      <div class="hero-copy"><p class="eyebrow">背诵 · 识字 · 写字 · 词语</p><h2>每天 20 张卡，<br /><span>把课本记成自己的。</span></h2><p>先回忆，再翻面确认；选出真实感受，让难卡更快回来，熟卡慢慢拉开间隔。</p><div class="hero-tags"><span>背诵自由选择</span><span>可随机或顺序出卡</span><span>坚持到 8 月 31 日</span></div><button id="startButton" class="primary large" type="button">开始今天的打卡 <span>→</span></button></div>
       <div class="hero-art" aria-hidden="true"><div class="paper-card"><span>第 12 课</span><b>少年<br />中国说</b><i>✦</i></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="ink-dot dot-one"></div><div class="ink-dot dot-two"></div></div>
     </section>
 
     <section class="panel content-picker" aria-labelledby="contentPickerTitle">
-      <div class="content-picker-head"><div><p class="eyebrow">本轮内容</p><h2 id="contentPickerTitle">选择要练习的内容</h2><p>可单选或多选；背诵类在一天内最多出现 3 道。</p></div><div class="content-picker-actions"><label class="select-all"><input id="selectAllFilters" type="checkbox" checked /> 全选</label><button id="clearFilters" class="secondary compact" type="button">清空</button></div></div>
+      <div class="content-picker-head"><div><p class="eyebrow">本轮内容</p><h2 id="contentPickerTitle">选择要练习的内容</h2><p>可单选或多选；背诵内容可自由安排数量与具体项目。</p></div><div class="content-picker-actions"><label class="select-all"><input id="selectAllFilters" type="checkbox" checked /> 全选</label><button id="clearFilters" class="secondary compact" type="button">清空</button></div></div>
       <div class="filter-grid">
         <label class="filter-option"><input data-study-filter type="checkbox" value="recite-poem" checked /><span>背诵诗词</span></label>
         <label class="filter-option"><input data-study-filter type="checkbox" value="recite-article" checked /><span>背诵课文</span></label>
@@ -36,8 +36,9 @@
         <label class="filter-option"><input data-study-filter type="checkbox" value="recognition" checked /><span>识字表</span></label>
         <label class="filter-option"><input data-study-filter type="checkbox" value="vocab" checked /><span>词语表</span></label>
       </div>
+      <section class="recite-picker" aria-labelledby="recitePickerTitle"><div class="recite-picker-head"><div><strong id="recitePickerTitle">背诵具体项目</strong><span>按需勾选，可跨类别组合</span></div><div><button id="selectAllRecite" class="text-button" type="button">全选背诵</button><button id="clearRecite" class="text-button" type="button">清空背诵</button></div></div><div id="reciteItemGroups" class="recite-item-groups"></div></section>
       <div class="order-picker" role="group" aria-label="卡片出现顺序"><span>卡片出现顺序</span><label class="order-option"><input type="radio" name="card-order" value="random" checked /> 随机</label><label class="order-option"><input type="radio" name="card-order" value="sequential" /> 顺序</label></div>
-      <p id="filterHint" class="filter-hint">已选择 7 类内容；背诵类当天最多 3 道。</p>
+      <p id="filterHint" class="filter-hint">已选择 7 类内容；已勾选全部背诵具体项目。</p>
     </section>
 
     <section class="dashboard"><div class="stat panel"><span>今日完成</span><strong id="todayStudyCount">0</strong><small>张卡片</small></div><div class="stat panel"><span>待复习</span><strong id="dueCount">—</strong><small>张卡片</small></div><div class="stat panel"><span>已掌握</span><strong id="learnedCount">—</strong><small>张卡片</small></div><div class="stat panel"><span>总卡片</span><strong id="totalCount">—</strong><small>张卡片</small></div></section>
@@ -51,6 +52,6 @@
     <section class="how panel"><p class="eyebrow">怎么记得更牢</p><h2>回忆，是记忆真正发生的地方。</h2><div><article><b>1</b><p>先看提示，尽量从脑中取回答案。</p></article><article><b>2</b><p>翻面后核对原文、拼音、释义和例句。</p></article><article><b>3</b><p>如实评级，困难的卡片会更快回来。</p></article></div></section>
     <footer>五上语文学习网页 · 内容整理自所附背诵、识字、写字、词语资料</footer>
   </main>
-  <script type="module" src="app.js?v=20260804-3"></script>
+  <script type="module" src="app.js?v=20260824-1"></script>
 </body>
 </html>
