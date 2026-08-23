@@ -1,11 +1,12 @@
 import { reciteCards, recognitionSeeds, writingItems, vocabItems } from './data.js';
 
 const GOAL = 20;
-const MAX_DAILY_RECITE = 3;
 const END_DATE = '2026-08-31';
 const CLIENT_KEY = 'chinese_client_id';
-const LOCAL_STATE_KEY = 'chinese_card_progress_v1';
-const LOCAL_LOG_KEY = 'chinese_review_log_v1';
+const LEGACY_LOCAL_STATE_KEY = 'chinese_card_progress_v1';
+const LEGACY_LOCAL_LOG_KEY = 'chinese_review_log_v1';
+const LOCAL_STATE_KEY = 'chinese_card_progress_v2';
+const LOCAL_LOG_KEY = 'chinese_review_log_v2';
 
 const $ = (id) => document.getElementById(id);
 const state = { user: null, cardProgress: {}, logs: [], session: null, serverStats: [], usedTodayIds: new Set() };
@@ -39,10 +40,36 @@ const wordMeanings = {
   精巧: '精细巧妙。', 身段: '身体的姿态；身材。', 适宜: '合适，相宜。', 寻常: '平常。', 忘却: '忘记。', 安稳: '平稳，稳定。', 悠然: '悠闲自在的样子。', 望哨: '站岗放哨。', 恩惠: '给予的或受到的好处。', 父慈子孝: '父亲慈爱，子女孝顺。', 心浮气躁: '心思浮动，性情急躁。', 家喻户晓: '家家户户都知道。', 一张一弛: '有张有弛，劳逸结合。', 诗词歌赋: '诗、词、歌、赋的总称。', 笙箫管笛: '几种管乐器的合称。', 侵入: '进入并侵犯。', 飘落: '飘着降落。', 粉妆玉砌: '白雪覆盖大地，像用白玉砌成。', 彩虹: '雨过天晴时出现的弧形彩色光带。', 俗话: '通俗流行的话。', 瑞雪: '应时的好雪。', 供应: '以物资满足需要。', 湘菜: '湖南风味菜肴。', 粤菜: '广东风味菜肴。', 蜀绣: '四川的刺绣。', 苏绣: '苏州的刺绣。', 沪剧: '上海地方戏曲。', 滇剧: '云南地方戏曲。', 赣江: '江西境内的河流。', 闽江: '福建境内的河流。', 陕北: '陕西北部地区。', 窑洞: '在土山中挖成的洞穴式住宅。', 皖南: '安徽南部地区。', 民居: '普通居民的住宅。', 舅父: '母亲的兄弟。', 公事: '公家的事务。', 一知半解: '知道得不全面，理解得不深。', 兴趣: '喜好的情绪。', 述说: '叙述说明。', 勉勉强强: '刚好能应付。', 厌烦: '嫌麻烦而讨厌。', 朝代: '建立国号的帝王世代相传的整个时期。', 兴亡盛衰: '兴盛、衰亡、繁荣、衰败。', 处世: '在社会上生活和与人交往。', 书刊: '书籍和刊物。', 精彩: '出色；漂亮。', 质朴: '朴实，不矫饰。', 浅显: '浅近明白，容易懂。', 国际: '国与国之间。', 刊物: '定期或不定期出版的读物。'
 };
 
-const genericMeaning = (term) => `课文词语“${term}”的释义可结合所在课文语境理解。`;
-const meaningForWord = (term) => wordMeanings[term] || genericMeaning(term);
-const meaningForChar = (char, group) => charMeanings[char] || `在“${group}”中表示与该词相关的意思。`;
-const sentenceFor = (word) => `例句：我们在课文中读到了“${word}”，并试着用它说一句完整的话。`;
+const writingFallbacks = {
+  浸: ['沉浸', 'chén jìn', '泡在液体里；也指逐渐进入某种状态。', '浸入水中或处在某种气氛、情境中。'], 荒: ['荒凉', 'huāng liáng', '荒芜。', '人烟稀少、没有生气。'], 旷: ['空旷', 'kōng kuàng', '空阔，开阔。', '地方宽广而没有遮挡。'], 芽: ['发芽', 'fā yá', '植物刚长出的嫩芽。', '种子或植物长出嫩芽。'], 矮: ['矮小', 'ǎi xiǎo', '高度小。', '又矮又小。'],
+  丘: ['山丘', 'shān qiū', '小山。', '较小的山。'], 坊: ['作坊', 'zuō fang', '手工业制造场所。', '手工生产物品的小工场。'], 墨: ['墨水', 'mò shuǐ', '写字、绘画用的黑色液体。', '写字或画画用的液体。'], 抄: ['抄写', 'chāo xiě', '照原文写下来。', '照着原文写下来。'], 敲: ['敲门', 'qiāo mén', '在物体上轻轻打。', '用手或器物叩门。'],
+  哗: ['哗啦', 'huā lā', '形容撞击、水流等发出的声音。', '形容水流或物体撞击发出的声音。'], 喘: ['喘气', 'chuǎn qì', '急促地呼吸。', '因劳累或紧张而急促呼吸。'], 辛: ['辛苦', 'xīn kǔ', '劳累，费力。', '身心劳累、付出很多。'], 猎: ['猎物', 'liè wù', '捕捉；打猎。', '被捕捉或猎取的动物。'], 蛇: ['毒蛇', 'dú shé', '爬行动物，身体细长。', '有毒牙的蛇。'],
+  涌: ['涌现', 'yǒng xiàn', '水或云等冒出；大量出现。', '许多人或事物大量出现。'], 郎: ['新郎', 'xīn láng', '男子。', '刚结婚的男子。'], 挺: ['挺身', 'tǐng shēn', '直立；撑直。', '挺直身子站出来。'], 惯: ['习惯', 'xí guàn', '长期逐渐养成的行为方式。', '长期形成而不易改变的做法。'], 咬: ['咬住', 'yǎo zhù', '用牙夹住或夹紧。', '用牙齿紧紧夹住。'],
+  乃: ['乃至', 'nǎi zhì', '是；于是；竟然。', '甚至到某种程度。'], 杭: ['杭州', 'háng zhōu', '杭州的简称。', '浙江省省会杭州。'], 哀: ['悲哀', 'bēi āi', '悲伤。', '伤心难过。'], 欧: ['欧洲', 'ōu zhōu', '欧洲的简称。', '世界七大洲之一。'], 洲: ['亚洲', 'yà zhōu', '大陆及其附近岛屿。', '世界七大洲之一。'],
+  泻: ['倾泻', 'qīng xiè', '很快地流下。', '水或光等大量、快速地流下。'], 潜: ['潜水', 'qián shuǐ', '隐藏在水下；暗中进行。', '在水面以下活动。'], 腾: ['奔腾', 'bēn téng', '跳跃、上升；奔驰。', '江水或马匹飞奔、气势很大。'], 胎: ['胎儿', 'tāi ér', '人或动物母体内的幼体。', '母体内尚未出生的幼体。'], 皇: ['皇帝', 'huáng dì', '君主；皇帝。', '封建国家最高统治者。'],
+  途: ['前途', 'qián tú', '道路；途径。', '将来可发展的道路或景况。'], 纽: ['纽扣', 'niǔ kòu', '可以扣合衣服的东西。', '衣服上用来扣合的扣子。'], 唐: ['唐朝', 'táng cháo', '朝代名；姓。', '中国古代的一个朝代。'], 抵: ['抵达', 'dǐ dá', '顶住；到达。', '到达目的地。'], 基: ['基础', 'jī chǔ', '建筑物的根脚；根本。', '事物发展的根本或起点。'],
+  揭: ['揭开', 'jiē kāi', '把遮盖物掀开；公布。', '把盖着的东西打开。'], 皱: ['皱纹', 'zhòu wén', '皮肤或物体表面的褶纹。', '皮肤上细小的褶子。'], 哇: ['哇哇叫', 'wā wā jiào', '象声词。', '形容大声哭叫或喊叫。'], 舍: ['舍得', 'shě de', '放弃；舍弃。', '愿意割舍，不吝惜。'], 扎: ['扎针', 'zhā zhēn', '刺；插。', '把针刺入皮肤或物体。'],
+  猪: ['野猪', 'yě zhū', '哺乳动物，家猪的祖先。', '生活在野外的猪。'], 鲁: ['粗鲁', 'cū lǔ', '迟钝；粗野。', '言行粗野、不讲礼貌。'], 泣: ['哭泣', 'kū qì', '小声哭。', '低声地哭。'], 卑: ['卑微', 'bēi wēi', '低下；谦恭。', '地位低微或非常微小。'], 亢: ['高亢', 'gāo kàng', '高，强。', '声音高而洪亮。'],
+  维: ['维护', 'wéi hù', '保持；维系。', '保护并使事物保持良好状态。'], 孙: ['子孙', 'zǐ sūn', '儿子的儿子；后代。', '儿子、孙子等后代。'], 眠: ['睡眠', 'shuì mián', '睡觉。', '睡觉休息的状态。'], 寺: ['寺庙', 'sì miào', '佛教出家人修行、居住的地方。', '供奉神佛的建筑。'], 愈: ['愈发', 'yù fā', '更加；越。', '表示程度进一步加深。'],
+  遥: ['遥远', 'yáo yuǎn', '远。', '距离很远。'], 铅: ['铅笔', 'qiān bǐ', '一种金属元素。', '用石墨芯写字、外包木杆的笔。'], 盾: ['矛盾', 'máo dùn', '古代防护身体的兵器。', '言行或事物之间不一致、相互冲突。'], 枕: ['枕头', 'zhěn tou', '睡觉时垫在头下的东西。', '睡觉时用来垫头的用品。'], 素: ['素白', 'sù bái', '本色；白色；向来。', '洁白而不加彩饰。'],
+  朱: ['朱红', 'zhū hóng', '红色。', '鲜艳的红色。'], 韵: ['韵味', 'yùn wèi', '和谐的声音；情趣。', '含蓄而耐人寻味的情趣。'], 蜜: ['蜂蜜', 'fēng mì', '蜜蜂酿的甜汁。', '蜜蜂采集花蜜酿成的甜物质。'], 耻: ['耻辱', 'chǐ rǔ', '羞愧；羞辱。', '使人感到羞愧的事。'], 吾: ['吾辈', 'wú bèi', '我；我们。', '我们这一类人。'],
+  谓: ['所谓', 'suǒ wèi', '说；叫作。', '所说的、通常叫作的。'], 矣: ['而已', 'ér yǐ', '语气词，表示完成或肯定。', '罢了，仅此而已。'], 岂: ['岂能', 'qǐ néng', '表示反问，难道。', '怎么能够，表示反问。'], 勇: ['勇敢', 'yǒng gǎn', '有胆量，敢做。', '不怕困难和危险。'], 宴: ['宴会', 'yàn huì', '请人吃饭喝酒的聚会。', '招待客人的酒席或聚会。'],
+  凯: ['凯旋', 'kǎi xuán', '胜利。', '战胜归来。'], 迷: ['迷人', 'mí rén', '使人陶醉；分辨不清。', '很吸引人。'], 迫: ['迫切', 'pò qiè', '紧迫；逼迫。', '需要马上做，不能拖延。'], 贾: ['贾宝玉', 'jiǎ bǎo yù', '商人；姓。', '《红楼梦》中的人物姓名。'], 某: ['某人', 'mǒu rén', '指不明确的人或事物。', '不知道或不必说明姓名的人。']
+};
+
+function meaningForWord(term, char = '') {
+  if (wordMeanings[term]) return wordMeanings[term];
+  const charMeaning = charMeanings[char];
+  return `“${term}”中“${char}”表示${charMeaning}`;
+}
+
+function meaningForChar(char, group) {
+  return charMeanings[char] || `在“${group}”中，表示${meaningForWord(group, char)}中的相关意思。`;
+}
+
+function sentenceFor(word) {
+  return `例句：这里“${word}”表示${meaningForWord(word)}。`;
+}
 
 const cards = [
   ...reciteCards.map((card) => ({ ...card, category: 'recite', label: card.kind === 'idiom' ? '成语背诵' : card.kind === 'quote' ? '名人语录' : card.kind === 'poem' ? '诗词背诵' : card.id.startsWith('article-') ? '课文背诵' : '其他背诵' })),
@@ -65,6 +92,33 @@ function selectedFilters() {
   return new Set([...document.querySelectorAll('[data-study-filter]:checked')].map((input) => input.value));
 }
 
+function selectedReciteIds() {
+  return new Set([...document.querySelectorAll('[data-recite-card]:checked')].map((input) => input.value));
+}
+
+function reciteDisplayName(card) {
+  return card.kind === 'idiom' ? card.answer.split('\n')[0] : card.title.replace(/^(古诗|词|名句|课文|古人谈读书)｜/, '');
+}
+
+function renderReciteOptions() {
+  const groups = [
+    ['recite-poem', '背诵诗词'], ['recite-article', '背诵课文'], ['recite-idiom', '背诵成语'], ['recite-other', '背诵其他']
+  ];
+  $('reciteItemGroups').innerHTML = groups.map(([key, label]) => {
+    const items = cards.filter((card) => card.category === 'recite' && filterKey(card) === key);
+    return `<details class="recite-item-group"><summary>${label} <em>${items.length} 项</em></summary><div class="recite-item-list">${items.map((card) => `<label class="recite-item"><input data-recite-card data-recite-filter="${key}" type="checkbox" value="${card.id}" checked /><span>${reciteDisplayName(card)}</span><small>${card.source}</small></label>`).join('')}</div></details>`;
+  }).join('');
+}
+
+function syncReciteParent(filter) {
+  const items = [...document.querySelectorAll(`[data-recite-filter="${filter}"]`)];
+  const parent = document.querySelector(`[data-study-filter][value="${filter}"]`);
+  if (!parent) return;
+  const checked = items.filter((input) => input.checked).length;
+  parent.checked = checked > 0;
+  parent.indeterminate = checked > 0 && checked < items.length;
+}
+
 function selectedOrder() {
   return document.querySelector('[name="card-order"]:checked')?.value || 'random';
 }
@@ -78,7 +132,8 @@ function syncFilterControls() {
   const selected = filters.filter((input) => input.checked).length;
   $('selectAllFilters').checked = selected === filters.length;
   $('selectAllFilters').indeterminate = selected > 0 && selected < filters.length;
-  $('filterHint').textContent = selected ? `已选择 ${selected} 类内容；背诵类当天最多 ${MAX_DAILY_RECITE} 道。` : '请至少选择一类内容；背诵类当天最多 3 道。';
+  const reciteSelected = document.querySelectorAll('[data-recite-card]:checked').length;
+  $('filterHint').textContent = selected ? `已选择 ${selected} 类内容；已勾选 ${reciteSelected} 个背诵具体项目。` : '请至少选择一类内容。';
 }
 
 function dateKey(date = new Date()) {
@@ -91,14 +146,23 @@ function getClientId() {
   return id;
 }
 
+function localStorageKey(baseKey) {
+  return `${baseKey}_${state.user?.id || 'guest'}`;
+}
+
+function discardSharedLegacyCache() {
+  localStorage.removeItem(LEGACY_LOCAL_STATE_KEY);
+  localStorage.removeItem(LEGACY_LOCAL_LOG_KEY);
+}
+
 function readLocal() {
-  try { state.cardProgress = JSON.parse(localStorage.getItem(LOCAL_STATE_KEY) || '{}'); } catch { state.cardProgress = {}; }
-  try { state.logs = JSON.parse(localStorage.getItem(LOCAL_LOG_KEY) || '[]'); } catch { state.logs = []; }
+  try { state.cardProgress = JSON.parse(localStorage.getItem(localStorageKey(LOCAL_STATE_KEY)) || '{}'); } catch { state.cardProgress = {}; }
+  try { state.logs = JSON.parse(localStorage.getItem(localStorageKey(LOCAL_LOG_KEY)) || '[]'); } catch { state.logs = []; }
 }
 
 function saveLocal() {
-  localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(state.cardProgress));
-  localStorage.setItem(LOCAL_LOG_KEY, JSON.stringify(state.logs.slice(-1000)));
+  localStorage.setItem(localStorageKey(LOCAL_STATE_KEY), JSON.stringify(state.cardProgress));
+  localStorage.setItem(localStorageKey(LOCAL_LOG_KEY), JSON.stringify(state.logs.slice(-1000)));
 }
 
 function shuffle(list) {
@@ -116,8 +180,16 @@ function cardQuestion(card) {
     if (card.kind === 'poem') return { title: card.title, prompt: '根据诗词名字，写出诗词完整内容及作者和朝代。', answer: card.answer };
     return { title: card.title, prompt: card.prompt, answer: card.answer };
   }
-  if (card.category === 'recognition') return { title: `识字表｜${card.char}`, prompt: `字：${card.char}\n组词：${card.group}\n\n请说出这个字的拼音和字义，再解释组词。`, answer: `拼音：${card.pinyin}\n字义：${meaningForChar(card.char, card.group)}\n组词：${card.group}\n组词释义：${meaningForWord(card.group)}` };
-  if (card.category === 'writing') { const group = card.group || `${card.char}（请结合课文组词）`; const groupPinyin = card.groupPinyin || card.pinyin; return { title: '写字表｜根据拼音写字', prompt: `字的拼音：${card.pinyin}\n组词的拼音：${groupPinyin}\n\n请写出汉字，并说出字义和组词释义。`, answer: `字：${card.char}\n字义：${meaningForChar(card.char, group)}\n组词：${group}\n组词释义：${meaningForWord(group)}` }; }
+  if (card.category === 'recognition') return { title: `识字表｜${card.char}`, prompt: `字：${card.char}\n组词：${card.group}\n\n请说出这个字的拼音和字义，再解释组词。`, answer: `拼音：${card.pinyin}\n字义：${meaningForChar(card.char, card.group)}\n组词：${card.group}\n组词释义：${meaningForWord(card.group, card.char)}` };
+  if (card.category === 'writing') {
+    const fallback = writingFallbacks[card.char] || [];
+    const [fallbackGroup, fallbackPinyin, fallbackCharMeaning, fallbackGroupMeaning] = fallback;
+    const group = card.group || fallbackGroup;
+    const groupPinyin = card.groupPinyin || fallbackPinyin || card.pinyin;
+    const charMeaning = charMeanings[card.char] || fallbackCharMeaning || meaningForChar(card.char, group);
+    const groupMeaning = wordMeanings[group] || fallbackGroupMeaning || meaningForWord(group, card.char);
+    return { title: '写字表｜根据拼音写字', prompt: `字的拼音：${card.pinyin}\n组词的拼音：${groupPinyin}\n\n请写出汉字，并说出字义和组词释义。`, answer: `字：${card.char}\n字义：${charMeaning}\n组词：${group}\n组词释义：${groupMeaning}` };
+  }
   return { title: '词语表｜根据拼音写词语', prompt: `词语拼音：${card.pinyin}\n\n请写出词语，并说出释义和造句。`, answer: `词语：${card.word}\n释义：${meaningForWord(card.word)}\n造句：${sentenceFor(card.word)}` };
 }
 
@@ -128,18 +200,12 @@ function isDue(card) {
 
 function buildSession(isExtra = false) {
   const filters = selectedFilters();
-  const selectedCards = cards.filter((card) => filters.has(filterKey(card)) && !state.usedTodayIds.has(card.id));
+  const reciteIds = selectedReciteIds();
+  const selectedCards = cards.filter((card) => filters.has(filterKey(card)) && (card.category !== 'recite' || reciteIds.has(card.id)) && !state.usedTodayIds.has(card.id));
   const due = arrangeCards(selectedCards.filter(isDue));
-  const reviewedRecite = logsForDate(dateKey()).filter((log) => log.category === 'recite').length;
-  const reciteLimit = Math.max(0, MAX_DAILY_RECITE - reviewedRecite);
-  const recite = due.filter((card) => card.category === 'recite').slice(0, reciteLimit);
-  const other = due.filter((card) => card.category !== 'recite').slice(0, GOAL - recite.length);
-  let selected = [...recite, ...other];
+  let selected = due.slice(0, GOAL);
   if (selected.length < GOAL) {
-    const reciteCount = selected.filter((card) => card.category === 'recite').length;
-    const backupRecite = arrangeCards(selectedCards.filter((card) => card.category === 'recite' && !selected.includes(card))).slice(0, Math.max(0, reciteLimit - reciteCount));
-    selected = [...selected, ...backupRecite];
-    const remaining = arrangeCards(selectedCards.filter((card) => !selected.includes(card) && (card.category !== 'recite' || reciteCount + backupRecite.length < reciteLimit))).slice(0, GOAL - selected.length);
+    const remaining = arrangeCards(selectedCards.filter((card) => !selected.includes(card))).slice(0, GOAL - selected.length);
     selected = [...selected, ...remaining];
   }
   return { cards: arrangeCards(selected).slice(0, GOAL), index: 0, startedAt: Date.now(), answered: false, isExtra };
@@ -204,7 +270,7 @@ function renderHistory() {
 function startStudy(isExtra = false) {
   if (!selectedFilters().size) { alert('请至少选择一类学习内容。'); return; }
   state.session = buildSession(isExtra);
-  if (state.session.cards.length < GOAL) { alert('当前选择无法生成 20 道不重复题。背诵类每天最多 3 道，请同时选择至少一种非背诵内容，或勾选更多内容。'); return; }
+  if (state.session.cards.length < GOAL) { alert('当前选择无法生成 20 道不重复题，请勾选更多具体项目或学习内容。'); return; }
   state.session.cards.forEach((card) => state.usedTodayIds.add(card.id));
   $('studyPanel').classList.remove('hidden'); $('card').classList.remove('hidden'); $('completeState').classList.add('hidden'); showCurrentCard(); $('studyPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -272,13 +338,21 @@ document.addEventListener('click', (event) => {
   if (event.target.closest('#showAnswerButton')) { if (!state.session) return; state.session.answered = true; $('answerReveal').classList.remove('hidden'); $('showAnswerButton').classList.add('hidden'); document.querySelectorAll('.ratings button').forEach((button) => { button.disabled = false; }); }
 });
 
+discardSharedLegacyCache();
+renderReciteOptions();
 $('startButton').addEventListener('click', openStudy);
 $('backButton').addEventListener('click', closeStudy);
 $('completeBackButton').addEventListener('click', closeStudy);
 $('addTwentyButton').addEventListener('click', () => startStudy(true));
-$('selectAllFilters').addEventListener('change', (event) => { document.querySelectorAll('[data-study-filter]').forEach((input) => { input.checked = event.target.checked; }); syncFilterControls(); });
-$('clearFilters').addEventListener('click', () => { document.querySelectorAll('[data-study-filter]').forEach((input) => { input.checked = false; }); syncFilterControls(); });
-document.querySelectorAll('[data-study-filter]').forEach((input) => input.addEventListener('change', syncFilterControls));
+$('selectAllFilters').addEventListener('change', (event) => { document.querySelectorAll('[data-study-filter], [data-recite-card]').forEach((input) => { input.checked = event.target.checked; input.indeterminate = false; }); syncFilterControls(); });
+$('clearFilters').addEventListener('click', () => { document.querySelectorAll('[data-study-filter], [data-recite-card]').forEach((input) => { input.checked = false; input.indeterminate = false; }); syncFilterControls(); });
+$('selectAllRecite').addEventListener('click', () => { document.querySelectorAll('[data-recite-card], [data-study-filter][value^="recite-"]').forEach((input) => { input.checked = true; input.indeterminate = false; }); syncFilterControls(); });
+$('clearRecite').addEventListener('click', () => { document.querySelectorAll('[data-recite-card], [data-study-filter][value^="recite-"]').forEach((input) => { input.checked = false; input.indeterminate = false; }); syncFilterControls(); });
+document.querySelectorAll('[data-study-filter]').forEach((input) => input.addEventListener('change', () => {
+  if (input.value.startsWith('recite-')) document.querySelectorAll(`[data-recite-filter="${input.value}"]`).forEach((card) => { card.checked = input.checked; });
+  syncFilterControls();
+}));
+document.querySelectorAll('[data-recite-card]').forEach((input) => input.addEventListener('change', () => { syncReciteParent(input.dataset.reciteFilter); syncFilterControls(); }));
 $('accountButton').addEventListener('click', () => $('authPanel').classList.toggle('hidden'));
 $('closeAuthButton').addEventListener('click', () => $('authPanel').classList.add('hidden'));
 $('authForm').addEventListener('submit', (event) => { event.preventDefault(); void authRequest('login').catch((error) => { $('authMessage').textContent = error.message; }); });
