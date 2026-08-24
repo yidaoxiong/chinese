@@ -268,9 +268,8 @@ function renderHistory() {
 }
 
 function startStudy(isExtra = false) {
-  if (!selectedFilters().size) { alert('请至少选择一类学习内容。'); return; }
   state.session = buildSession(isExtra);
-  if (state.session.cards.length < GOAL) { alert('当前选择无法生成 20 道不重复题，请勾选更多具体项目或学习内容。'); return; }
+  if (!state.session.cards.length) { alert('请至少选择一项学习内容。'); return; }
   state.session.cards.forEach((card) => state.usedTodayIds.add(card.id));
   $('studyPanel').classList.remove('hidden'); $('card').classList.remove('hidden'); $('completeState').classList.add('hidden'); showCurrentCard(); $('studyPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -279,19 +278,22 @@ function openStudy() { state.usedTodayIds = new Set(); startStudy(false); }
 
 function showCurrentCard() {
   const session = state.session; const card = session.cards[session.index]; const question = cardQuestion(card);
-  $('studyCount').textContent = `${session.isExtra ? '加练' : '今日'}第 ${session.index + 1} / ${GOAL} 张`; $('studyTimer').textContent = session.isExtra ? '额外复习' : '本轮专注'; $('studyProgressBar').style.width = `${session.index / GOAL * 100}%`; $('cardKind').textContent = `${question.title.split('｜')[0]} · ${card.label}`; $('cardSource').textContent = card.source || '五上语文'; $('cardTitle').textContent = question.title; $('questionText').textContent = question.prompt; $('answerText').textContent = question.answer; $('answerReveal').classList.add('hidden'); $('showAnswerButton').classList.remove('hidden'); session.answered = false;
+  const total = session.cards.length;
+  $('studyCount').textContent = `${session.isExtra ? '加练' : '今日'}第 ${session.index + 1} / ${total} 张`; $('studyTimer').textContent = session.isExtra ? '额外复习' : '本轮专注'; $('studyProgressBar').style.width = `${session.index / total * 100}%`; $('cardKind').textContent = `${question.title.split('｜')[0]} · ${card.label}`; $('cardSource').textContent = card.source || '五上语文'; $('cardTitle').textContent = question.title; $('questionText').textContent = question.prompt; $('answerText').textContent = question.answer; $('answerReveal').classList.add('hidden'); $('showAnswerButton').classList.remove('hidden'); session.answered = false;
 }
 
 async function rateCurrent(rating) {
   const session = state.session; if (!session?.answered) return; const card = session.cards[session.index]; const buttons = document.querySelectorAll('.ratings button'); buttons.forEach((button) => { button.disabled = true; });
-  try { await recordReview(card, rating); session.index += 1; if (session.index >= GOAL) finishStudy(); else showCurrentCard(); refreshDashboard(); }
+  try { await recordReview(card, rating); session.index += 1; if (session.index >= session.cards.length) finishStudy(); else showCurrentCard(); refreshDashboard(); }
   catch (error) { $('authMessage').textContent = error.message; }
 }
 
 function finishStudy() {
   const isExtra = state.session?.isExtra;
-  $('completeTitle').textContent = isExtra ? '本轮加练完成！' : '今日打卡完成！';
-  $('completeMessage').textContent = isExtra ? `又完成了 20 张，今天已复习 ${logsForDate(dateKey()).length} 张卡。` : '20 张卡已经走过一遍；需要的话，可以再增加 20 张。';
+  const completed = state.session?.cards.length || 0;
+  const reachedGoal = logsForDate(dateKey()).length >= GOAL;
+  $('completeTitle').textContent = isExtra ? '本轮加练完成！' : reachedGoal ? '今日打卡完成！' : '本轮练习完成！';
+  $('completeMessage').textContent = isExtra ? `本轮完成 ${completed} 张，今天已复习 ${logsForDate(dateKey()).length} 张卡。` : reachedGoal ? '20 张卡已经走过一遍；需要的话，可以再增加 20 张。' : `已完成本轮 ${completed} 张。当前选择不足 20 张也可以正常练习；需要的话，可以再增加 20 张。`;
   $('card').classList.add('hidden'); $('completeState').classList.remove('hidden'); $('studyProgressBar').style.width = '100%'; refreshDashboard();
 }
 function closeStudy() { $('studyPanel').classList.add('hidden'); state.session = null; state.usedTodayIds = new Set(); refreshDashboard(); }
