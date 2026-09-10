@@ -70,6 +70,12 @@ button, p, h1, h2, h3, span, small, dd { overflow-wrap: anywhere; }
 .module-card .module-count small { color: var(--muted); font-weight: 400; }
 .range-panel { margin-top: 18px; padding: 25px 30px 27px; }
 .range-panel h2 { font-size: 25px; }
+.character-category-control { margin-top: 16px; padding: 14px 16px; border: 1px solid #edc6ad; border-radius: 15px; background: #fff8f1; }
+.character-category-control > strong { display: block; margin-bottom: 9px; color: var(--ink); font-size: 13px; }
+.character-category-control > div { display: flex; flex-wrap: wrap; gap: 9px; }
+.category-option { display: inline-flex; align-items: center; gap: 8px; min-width: 108px; min-height: 44px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 12px; background: white; color: #6f6259; font-size: 14px; cursor: pointer; }
+.category-option input { accent-color: var(--orange); }
+.category-option:has(input:checked) { border-color: #e4a179; background: #fdf0e5; color: var(--orange-deep); font-weight: 800; }
 .range-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-top: 18px; }
 .select-all, .order-option { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 12px; background: #fffaf5; color: #6f6259; font-size: 13px; cursor: pointer; }
 .select-all input, .order-option input { accent-color: var(--orange); }

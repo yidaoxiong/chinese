@@ -124,14 +124,14 @@ function renderRangeList() {
   const selection = state.selection;
   $('rangeList').innerHTML = units.map((unitNumber) => {
     const unit = textbookUnits.find((entry) => entry.number === unitNumber);
-    const count = moduleCardCount(module, { units: new Set([unitNumber]), lessons: new Set() });
+    const count = moduleCardCount(module, { units: new Set([unitNumber]), lessons: new Set(), categories: selection.categories });
     if (isGarden) {
       const gardenCount = cardsByModule.garden.filter((card) => card.textbookUnit === unitNumber).length;
       return `<details class="unit-range" data-unit-range="${unitNumber}" open><summary><input data-unit-checkbox="${unitNumber}" type="checkbox" ${selection.units.has(unitNumber) ? 'checked' : ''} aria-label="选择第${unitNumber}单元园地" /><span class="unit-name">第${unitNumber}单元·语文园地</span><span class="unit-count">${gardenCount} 题</span></summary><div class="lesson-list"><label class="lesson-option garden-row"><input data-garden-checkbox="${unitNumber}" type="checkbox" ${selection.units.has(unitNumber) ? 'checked' : ''} /><span>整组园地知识点</span><em>${gardenCount} 题</em></label></div></details>`;
     }
     const lessons = unit?.lessons || [];
     return `<details class="unit-range" data-unit-range="${unitNumber}" open><summary><input data-unit-checkbox="${unitNumber}" type="checkbox" ${selection.units.has(unitNumber) ? 'checked' : ''} aria-label="选择第${unitNumber}单元" /><span class="unit-name">${esc(unit?.title || `第${unitNumber}单元`)}</span><span class="unit-count">${count} 题</span></summary><div class="lesson-list">${lessons.map((lesson) => {
-      const lessonCount = cardsByModule[module].filter((card) => card.lessonNumber === lesson.number).length;
+      const lessonCount = moduleCardCount(module, { units: new Set(), lessons: new Set([lesson.number]), categories: selection.categories });
       return `<label class="lesson-option"><input data-lesson-checkbox="${lesson.number}" data-parent-unit="${unitNumber}" type="checkbox" ${selection.units.has(unitNumber) || selection.lessons.has(lesson.number) ? 'checked' : ''} /><span>第${lesson.number}课 · ${esc(lesson.title)}</span><small>${lessonCount} 题</small></label>`;
     }).join('')}</div></details>`;
   }).join('');
@@ -145,6 +145,9 @@ function syncRangeControls() {
   const all = selectedCount === units.length;
   $('selectAllUnits').checked = all;
   $('selectAllUnits').indeterminate = selectedCount > 0 && !all;
+  document.querySelectorAll('[data-character-category]').forEach((input) => {
+    input.checked = state.selection.categories?.has(input.dataset.characterCategory) || false;
+  });
   for (const unit of units) {
     const unitInput = document.querySelector(`[data-unit-checkbox="${unit}"]`);
     const details = document.querySelector(`[data-unit-range="${unit}"]`);
@@ -158,7 +161,11 @@ function syncRangeControls() {
   state.rangeCandidates = candidates;
   $('rangeQuestionCount').textContent = `题库 ${candidates.length} 题`;
   $('rangeMaxCount').textContent = candidates.length ? `本轮最多 ${Math.min(GOAL, candidates.length)} 题` : '请选择有题目的范围';
-  $('rangeHint').textContent = candidates.length ? `${selectionLabel(state.selection, state.currentModule)} · 已选 ${candidates.length} 题；到期卡优先。` : '请选择一个或多个单元或课文。';
+  const noCharacterCategory = state.currentModule === 'characters' && state.selection.categories?.size === 0;
+  $('recognitionAudit').classList.toggle('hidden', state.currentModule !== 'characters' || !state.selection.categories?.has('recognition'));
+  $('rangeHint').textContent = candidates.length
+    ? `${selectionLabel(state.selection, state.currentModule)} · 已选 ${candidates.length} 题；到期卡优先。`
+    : noCharacterCategory ? '请至少选择“写字表”或“识字表”。' : '请选择一个或多个单元或课文。';
   $('startModuleButton').disabled = candidates.length === 0;
 }
 
@@ -174,10 +181,11 @@ function selectModule(moduleId) {
   if (!modulesById[moduleId]) return;
   state.currentModule = moduleId;
   const units = moduleId === 'garden' ? gardenUnits : textbookUnits.map((unit) => unit.number);
-  state.selection = { units: new Set(units), lessons: new Set() };
+  state.selection = { units: new Set(units), lessons: new Set(), categories: new Set(categoriesForModule(moduleId)) };
   $('rangeTitle').textContent = `${modulesById[moduleId].label} · 选择范围`;
   $('rangeDescription').textContent = `${modulesById[moduleId].description}。可以选整个单元，也可以只选单篇课文。`;
   const audit = $('recognitionAudit');
+  $('characterCategoryControl').classList.toggle('hidden', moduleId !== 'characters');
   if (moduleId === 'characters') {
     audit.textContent = `附件标注“共${recognitionAudit.pdfDeclaredNewCharacters}个生字”；当前逐行保留 ${recognitionStats.tableRows} 条（黑字 ${recognitionStats.blackRows} 条、去重 ${recognitionStats.distinctBlackCharacters} 字，蓝色复习/多音字 ${recognitionStats.reviewPronunciations} 条）。黑字去重与PDF声明相差 ${recognitionStats.unexplainedDeclaredGap} 字，已保留审计，不删行凑数。`;
     audit.classList.remove('hidden');
@@ -453,6 +461,14 @@ function bindRangeEvents() {
     }
   });
 }
+
+$('characterCategoryControl').addEventListener('change', (event) => {
+  const input = event.target.closest('[data-character-category]');
+  if (!input || state.currentModule !== 'characters') return;
+  const category = input.dataset.characterCategory;
+  if (input.checked) state.selection.categories.add(category); else state.selection.categories.delete(category);
+  renderRangeList();
+});
 
 document.addEventListener('click', (event) => {
   const moduleCard = event.target.closest('[data-module]');

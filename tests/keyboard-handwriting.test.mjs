@@ -62,6 +62,8 @@ const [appSource, htmlSource, handwritingSource, cssSource] = await Promise.all(
 ]);
 assert.match(htmlSource, /id="firstHandwritingCanvas"/u);
 assert.match(htmlSource, /id="secondHandwritingCanvas"/u);
+assert.match(htmlSource, /data-character-category="writing"/u);
+assert.match(htmlSource, /data-character-category="recognition"/u);
 assert.doesNotMatch(htmlSource, /handwritingOverlay|secondWritingInput|键盘复写/u);
 assert.doesNotMatch(handwritingSource, /requestFullscreen|exitFullscreen|handwriting-open/u);
 assert.match(appSource, /state\.firstHandwriting\.clear\(\)/u);

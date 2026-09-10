@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f6efe5" />
   <title>五上语文·三模块打卡</title>
-  <link rel="stylesheet" href="styles.css?v=3.1.0" />
+  <link rel="stylesheet" href="styles.css?v=3.2.0" />
 </head>
 <body>
   <main class="shell">
@@ -27,7 +27,7 @@
 
     <section class="module-section" aria-labelledby="moduleHeading"><div class="section-lead"><div><p class="eyebrow">选择练习模块</p><h2 id="moduleHeading">三大模块，分别打卡</h2><p>写字表与识字表合并到“汉字”，原有学习记录继续保留。</p></div><div class="overall-summary"><strong id="moduleCompleteCount">0 / 3</strong><span>模块今日完成</span><em id="overallQuestionCount">0 / 60 题</em></div></div><div id="moduleCards" class="module-cards"></div></section>
 
-    <section id="rangePanel" class="panel range-panel hidden" aria-labelledby="rangeTitle"><div class="section-head"><div><p class="eyebrow">第二步</p><h2 id="rangeTitle">选择教材范围</h2><p id="rangeDescription" class="hint"></p><p id="recognitionAudit" class="audit-note hidden"></p></div><button id="rangeBackButton" class="secondary compact" type="button">← 返回模块</button></div><div class="range-toolbar"><label class="select-all"><input id="selectAllUnits" type="checkbox" /> 全选单元</label><button id="clearUnits" class="secondary compact" type="button">清空</button><label class="order-option"><input type="radio" name="card-order" value="random" checked /> 随机出题</label><label class="order-option"><input type="radio" name="card-order" value="sequential" /> 按教材顺序</label><label id="reverseGardenControl" class="order-option hidden"><input id="reverseGarden" type="checkbox" /> 偶尔反向提示</label></div><div id="rangeHint" class="range-hint">请选择一个或多个单元。</div><div id="rangeList" class="range-list"></div><div class="range-footer"><div><strong id="rangeQuestionCount">题库 0 题</strong><span id="rangeMaxCount">本轮最多 20 题</span></div><button id="startModuleButton" class="primary large" type="button">开始本模块 <span>→</span></button></div></section>
+    <section id="rangePanel" class="panel range-panel hidden" aria-labelledby="rangeTitle"><div class="section-head"><div><p class="eyebrow">第二步</p><h2 id="rangeTitle">选择教材范围</h2><p id="rangeDescription" class="hint"></p><div id="characterCategoryControl" class="character-category-control hidden" role="group" aria-label="选择汉字表类型"><strong>先选择汉字表</strong><div><label class="category-option"><input type="checkbox" data-character-category="writing" checked /> 写字表</label><label class="category-option"><input type="checkbox" data-character-category="recognition" checked /> 识字表</label></div></div><p id="recognitionAudit" class="audit-note hidden"></p></div><button id="rangeBackButton" class="secondary compact" type="button">← 返回模块</button></div><div class="range-toolbar"><label class="select-all"><input id="selectAllUnits" type="checkbox" /> 全选单元</label><button id="clearUnits" class="secondary compact" type="button">清空</button><label class="order-option"><input type="radio" name="card-order" value="random" checked /> 随机出题</label><label class="order-option"><input type="radio" name="card-order" value="sequential" /> 按教材顺序</label><label id="reverseGardenControl" class="order-option hidden"><input id="reverseGarden" type="checkbox" /> 偶尔反向提示</label></div><div id="rangeHint" class="range-hint">请选择一个或多个单元。</div><div id="rangeList" class="range-list"></div><div class="range-footer"><div><strong id="rangeQuestionCount">题库 0 题</strong><span id="rangeMaxCount">本轮最多 20 题</span></div><button id="startModuleButton" class="primary large" type="button">开始本模块 <span>→</span></button></div></section>
 
     <section class="dashboard"><div class="stat panel"><span>今日总完成</span><strong id="todayStudyCount">0</strong><small>题 / 60</small></div><div class="stat panel"><span>待复习</span><strong id="dueCount">0</strong><small>张卡片</small></div><div class="stat panel"><span>已掌握</span><strong id="learnedCount">0</strong><small>张卡片</small></div><div class="stat panel"><span>题库总量</span><strong id="totalCount">0</strong><small>三个模块</small></div></section>
 
@@ -69,9 +69,9 @@
     </section>
 
     <section class="panel how"><p class="eyebrow">使用提示</p><h2>回忆与书写，都是记忆的一部分。</h2><div><article><b>1</b><p>选模块和范围；题库不足 20 题时按实际数量出题。</p></article><article><b>2</b><p>汉字先写一次、翻面核对后再写一次；词语先手写再核对。</p></article><article><b>3</b><p>如实评级，困难的卡片会更快回来；三个模块分别记录进度。</p></article></div></section>
-    <footer>五上语文学习网页 · 内容整理自所附识字、写字、词语与语文园地资料 · <span>v3.1.0</span></footer>
+    <footer>五上语文学习网页 · 内容整理自所附识字、写字、词语与语文园地资料 · <span>v3.2.0</span></footer>
   </main>
 
-  <script type="module" src="app.js?v=3.1.0"></script>
+  <script type="module" src="app.js?v=3.2.0"></script>
 </body>
 </html>

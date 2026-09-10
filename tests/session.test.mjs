@@ -13,6 +13,9 @@ const mixedCards = [cards[0], { id: 'recognition-1', module: 'recognition', text
 assert.deepEqual(MODULES.map((module) => module.id), ['characters', 'vocab', 'garden']);
 assert.deepEqual(categoriesForModule('characters'), ['writing', 'recognition']);
 assert.deepEqual(cardsInSelection(mixedCards, 'characters', { units: new Set([1]), lessons: new Set() }).map((card) => card.id), ['card-1', 'recognition-1']);
+assert.deepEqual(cardsInSelection(mixedCards, 'characters', { units: new Set([1]), lessons: new Set(), categories: new Set(['writing']) }).map((card) => card.id), ['card-1']);
+assert.deepEqual(cardsInSelection(mixedCards, 'characters', { units: new Set([1]), lessons: new Set(), categories: new Set(['recognition']) }).map((card) => card.id), ['recognition-1']);
+assert.deepEqual(cardsInSelection(mixedCards, 'characters', { units: new Set([1]), lessons: new Set(), categories: new Set() }).map((card) => card.id), []);
 assert.deepEqual(combineModuleStats({ writing: { completed: 3, remembered: 2 }, recognition: { completed: 4, remembered: 1 } }).characters, { completed: 7, remembered: 3 });
 assert.deepEqual(arrangeCards([
   { id: 'r2', module: 'recognition', textbookUnit: 1, lessonNumber: 2 },
