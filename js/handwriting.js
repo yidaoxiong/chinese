@@ -1,15 +1,16 @@
 /** iPad-friendly handwriting canvas. It records strokes for the child’s own
  * self-check; it deliberately does not claim to recognise handwriting. */
 export class HandwritingController {
-  constructor(root, { onDone } = {}) {
+  constructor(root, { onDone, onChange } = {}) {
     this.root = root;
     this.canvas = root?.querySelector('canvas') || null;
     this.ctx = this.canvas?.getContext('2d') || null;
     this.onDone = onDone;
+    this.onChange = onChange;
     this.strokes = [];
     this.currentStroke = null;
     this.eraser = false;
-    this.previousOverflow = '';
+    this.cssSize = null;
     this.bound = false;
     if (this.canvas) this.bind();
   }
@@ -33,19 +34,29 @@ export class HandwritingController {
     this.resize();
     window.addEventListener('resize', () => this.resize());
     window.addEventListener('orientationchange', () => this.resize());
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.resize());
+      this.resizeObserver.observe(this.canvas);
+    }
   }
 
   resize() {
     if (!this.canvas || !this.ctx) return;
     const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
     const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const old = this.strokes;
+    const oldSize = this.cssSize;
+    if (oldSize && (oldSize.width !== rect.width || oldSize.height !== rect.height)) {
+      const scaleX = rect.width / oldSize.width;
+      const scaleY = rect.height / oldSize.height;
+      this.strokes = this.strokes.map((stroke) => stroke.map((point) => ({ ...point, x: point.x * scaleX, y: point.y * scaleY })));
+    }
+    this.cssSize = { width: rect.width, height: rect.height };
     this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
     this.canvas.height = Math.max(1, Math.round(rect.height * dpr));
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
-    this.strokes = old;
     this.redraw();
   }
 
@@ -59,6 +70,7 @@ export class HandwritingController {
     this.canvas.setPointerCapture?.(event.pointerId);
     this.currentStroke = [this.point(event)];
     this.drawSegment(this.currentStroke[0], this.currentStroke[0]);
+    this.onChange?.({ strokes: true, controller: this });
   }
 
   move(event) {
@@ -84,6 +96,7 @@ export class HandwritingController {
     } else if (this.currentStroke.length) this.strokes.push(this.currentStroke);
     this.currentStroke = null;
     this.redraw();
+    this.onChange?.({ strokes: this.hasStroke(), controller: this });
   }
 
   drawSegment(from, to) {
@@ -104,31 +117,13 @@ export class HandwritingController {
     this.eraser = mode;
   }
 
-  undo() { this.strokes.pop(); this.redraw(); }
-  clear() { this.strokes = []; this.currentStroke = null; this.redraw(); }
+  undo() { this.strokes.pop(); this.redraw(); this.onChange?.({ strokes: this.hasStroke(), controller: this }); }
+  clear() { this.strokes = []; this.currentStroke = null; this.redraw(); this.onChange?.({ strokes: false, controller: this }); }
   hasStroke() { return this.strokes.length > 0 || Boolean(this.currentStroke?.length); }
-
-  async open() {
-    this.root.classList.remove('hidden');
-    this.resize();
-    document.body.classList.add('handwriting-open');
-    this.previousOverflow = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = 'hidden';
-    try { await this.root.requestFullscreen?.({ navigationUI: 'hide' }); } catch { /* fixed overlay remains usable */ }
-    this.resize();
-  }
-
-  async close() {
-    if (document.fullscreenElement === this.root) { try { await document.exitFullscreen(); } catch { /* ignore */ } }
-    document.documentElement.style.overflow = this.previousOverflow;
-    document.body.classList.remove('handwriting-open');
-    this.root.classList.add('hidden');
-  }
 
   done() {
     const strokes = this.hasStroke();
     this.onDone?.({ strokes, controller: this });
-    void this.close();
   }
 }
 

@@ -1,11 +1,25 @@
 import { gardenUnits, textbookUnits } from '../data/catalog.js';
 
 export const MODULES = [
-  { id: 'writing', label: '写字表', description: '看拼音、组词并练习书写' },
-  { id: 'recognition', label: '识字表', description: '认读生字、拼音和组词' },
-  { id: 'vocab', label: '词语表', description: '根据拼音写词语' },
-  { id: 'garden', label: '语文园地', description: '日积月累与词句段运用' },
+  { id: 'characters', label: '汉字', description: '合并写字表与识字表，看拼音和组词练习书写', categories: ['writing', 'recognition'] },
+  { id: 'vocab', label: '词语表', description: '根据拼音手写词语', categories: ['vocab'] },
+  { id: 'garden', label: '语文园地', description: '日积月累与词句段运用', categories: ['garden'] },
 ];
+
+export function categoriesForModule(module) {
+  return MODULES.find((item) => item.id === module)?.categories || [module];
+}
+
+export function uiModuleForCategory(category) {
+  return MODULES.find((item) => item.categories.includes(category))?.id || category;
+}
+
+export function combineModuleStats(raw = {}) {
+  return Object.fromEntries(MODULES.map((module) => [module.id, categoriesForModule(module.id).reduce((total, category) => ({
+    completed: total.completed + Number(raw[category]?.completed || 0),
+    remembered: total.remembered + Number(raw[category]?.remembered || 0),
+  }), { completed: 0, remembered: 0 })]));
+}
 
 export function emptySelection() {
   return { units: new Set(), lessons: new Set() };
@@ -26,7 +40,7 @@ export function selectedLessonNumbers(selection) {
 }
 
 function cardMatchesModule(card, module) {
-  return card.module === module;
+  return categoriesForModule(module).includes(card.module);
 }
 
 /** Unit selection includes every lesson in that unit. A checked lesson can be

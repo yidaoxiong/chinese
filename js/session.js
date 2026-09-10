@@ -21,7 +21,15 @@ export function shuffle(list, random = Math.random) {
 }
 
 export function arrangeCards(list, order = 'random', random = Math.random) {
-  return order === 'sequential' ? [...list] : shuffle(list, random);
+  if (order !== 'sequential') return shuffle(list, random);
+  const moduleOrder = { writing: 0, recognition: 1, vocab: 2, garden: 3 };
+  return list.map((card, index) => ({ card, index })).sort((left, right) => {
+    const a = left.card; const b = right.card;
+    return (Number(a.textbookUnit) || 99) - (Number(b.textbookUnit) || 99)
+      || (Number(a.lessonNumber) || 99) - (Number(b.lessonNumber) || 99)
+      || (moduleOrder[a.module] ?? 99) - (moduleOrder[b.module] ?? 99)
+      || left.index - right.index;
+  }).map(({ card }) => card);
 }
 
 function cardKey(card) { return card.id || card.progressKey; }

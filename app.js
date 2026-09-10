@@ -3,16 +3,18 @@ import { writingItems } from './data/writing.js';
 import { recognitionItems, recognitionStats, recognitionAudit } from './data/recognition.js';
 import { vocabItems } from './data/vocab.js';
 import { gardenItems } from './data/gardens.js';
-import { MODULES, emptySelection, cardsInSelection, selectionLabel, unitLessonNumbers } from './js/selection.js';
+import { MODULES, cardsInSelection, categoriesForModule, combineModuleStats, emptySelection, selectionLabel, unitLessonNumbers } from './js/selection.js';
 import { buildSession, isDue, DAILY_TARGET } from './js/session.js';
-import { questionForCard, displaySource } from './js/card-renderer.js';
+import { answerHtmlForCard, questionForCard, displaySource } from './js/card-renderer.js';
 import { createHandwritingController } from './js/handwriting.js';
+import { canRateCard, canRevealAnswer, categoryLabel, needsFirstHandwriting, needsSecondHandwriting } from './js/practice-policy.js';
 import { CLIENT_KEY, dateKey, emptyProgress, loadLocalProgress, moduleStats, progressForRating, saveLocalProgress, userStorageKey } from './js/progress.js';
 
 const GOAL = DAILY_TARGET;
+const DAILY_TOTAL = GOAL * MODULES.length;
 const modulesById = Object.fromEntries(MODULES.map((module) => [module.id, module]));
 const cards = [...writingItems, ...recognitionItems, ...vocabItems, ...gardenItems];
-const cardsByModule = Object.fromEntries(MODULES.map((module) => [module.id, cards.filter((card) => card.module === module.id)]));
+const cardsByModule = Object.fromEntries(MODULES.map((module) => [module.id, cards.filter((card) => categoriesForModule(module.id).includes(card.module))]));
 const state = {
   user: null,
   cardProgress: {},
@@ -25,7 +27,8 @@ const state = {
   session: null,
   usedTodayIds: new Set(),
   reverseGarden: false,
-  handwritingPhase: null,
+  firstHandwriting: null,
+  secondHandwriting: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -56,7 +59,7 @@ function setMessage(message) {
 function localModuleStats() { return moduleStats(state.logs, dateKey()); }
 
 function remoteModuleStats() {
-  const result = Object.fromEntries(MODULES.map((module) => [module.id, { completed: 0, remembered: 0 }]));
+  const result = Object.fromEntries(['writing', 'recognition', 'vocab', 'garden'].map((module) => [module, { completed: 0, remembered: 0 }]));
   for (const row of state.serverModuleStats || []) {
     if (row.date && row.date !== dateKey()) continue;
     const module = row.category || row.module;
@@ -68,8 +71,8 @@ function remoteModuleStats() {
 }
 
 function todayModuleStats() {
-  const local = localModuleStats();
-  const remote = remoteModuleStats();
+  const local = combineModuleStats(localModuleStats());
+  const remote = combineModuleStats(remoteModuleStats());
   return Object.fromEntries(MODULES.map((module) => [module.id, {
     completed: Math.max(local[module.id]?.completed || 0, remote[module.id]?.completed || 0),
     remembered: Math.max(local[module.id]?.remembered || 0, remote[module.id]?.remembered || 0),
@@ -91,10 +94,10 @@ function renderModuleProgress() {
   const stats = todayModuleStats();
   const complete = MODULES.filter((module) => stats[module.id].completed >= GOAL).length;
   const total = dailyTotal(stats);
-  $('moduleCompleteCount').textContent = `${complete} / 4`;
-  $('overallQuestionCount').textContent = `${Math.min(80, total)} / 80 题`;
-  $('todayCount').textContent = Math.min(80, total);
-  $('todayStudyCount').textContent = Math.min(80, total);
+  $('moduleCompleteCount').textContent = `${complete} / ${MODULES.length}`;
+  $('overallQuestionCount').textContent = `${Math.min(DAILY_TOTAL, total)} / ${DAILY_TOTAL} 题`;
+  $('todayCount').textContent = Math.min(DAILY_TOTAL, total);
+  $('todayStudyCount').textContent = Math.min(DAILY_TOTAL, total);
   $('moduleProgressRows').innerHTML = MODULES.map((module) => {
     const item = stats[module.id];
     return `<div class="module-progress-row"><header><span>${esc(module.label)}</span><strong>${Math.min(GOAL, item.completed)} / ${GOAL}</strong></header><div class="mini-progress"><span style="width:${Math.min(100, item.completed / GOAL * 100)}%"></span></div></div>`;
@@ -175,7 +178,7 @@ function selectModule(moduleId) {
   $('rangeTitle').textContent = `${modulesById[moduleId].label} · 选择范围`;
   $('rangeDescription').textContent = `${modulesById[moduleId].description}。可以选整个单元，也可以只选单篇课文。`;
   const audit = $('recognitionAudit');
-  if (moduleId === 'recognition') {
+  if (moduleId === 'characters') {
     audit.textContent = `附件标注“共${recognitionAudit.pdfDeclaredNewCharacters}个生字”；当前逐行保留 ${recognitionStats.tableRows} 条（黑字 ${recognitionStats.blackRows} 条、去重 ${recognitionStats.distinctBlackCharacters} 字，蓝色复习/多音字 ${recognitionStats.reviewPronunciations} 条）。黑字去重与PDF声明相差 ${recognitionStats.unexplainedDeclaredGap} 字，已保留审计，不删行凑数。`;
     audit.classList.remove('hidden');
   } else audit.classList.add('hidden');
@@ -222,19 +225,19 @@ function setRatingsEnabled(enabled) {
   document.querySelectorAll('.ratings button').forEach((button) => { button.disabled = !enabled; });
 }
 
-function writingReadyForRating() {
+function handwritingReadyForRating() {
   const session = state.session;
-  if (!session?.card || session.card.module !== 'writing') return true;
-  return session.writingSecondDone || session.writingSecondTyped;
+  return canRateCard(session?.card, session);
 }
 
-function syncWritingStatus() {
+function syncHandwritingStatus() {
   const session = state.session;
-  if (!session || session.card?.module !== 'writing') return;
-  $('firstWritingStatus').textContent = session.writingFirstDone ? '第一次书写已完成，可以翻面核对。' : '还没有完成第一次书写。';
-  $('secondWritingStatus').textContent = writingReadyForRating() ? '第二次书写已确认，可以自评。' : '请再次全屏手写，或在输入框中正确写出目标字。';
-  $('showAnswerButton').disabled = !session.writingFirstDone;
-  setRatingsEnabled(Boolean(session.answerRevealed && writingReadyForRating()));
+  if (!session?.card) return;
+  const hasFirst = needsFirstHandwriting(session.card);
+  if (hasFirst) $('firstWritingStatus').textContent = session.firstWritingDone ? '书写已完成，可以翻面核对。' : '请在画板中书写，再点“完成书写”。';
+  if (needsSecondHandwriting(session.card)) $('secondWritingStatus').textContent = session.secondWritingDone ? '第二次书写已完成，可以自评。' : '请在第二块画板中复写，再点“完成复写”。';
+  $('showAnswerButton').disabled = hasFirst && !session.firstWritingDone;
+  setRatingsEnabled(Boolean(session.answerRevealed && handwritingReadyForRating()));
 }
 
 function showCurrentCard() {
@@ -243,62 +246,64 @@ function showCurrentCard() {
   if (!card) return;
   session.card = card;
   session.answerRevealed = false;
-  session.writingFirstDone = false;
-  session.writingSecondDone = false;
-  session.writingSecondTyped = false;
-  $('secondWritingInput').value = '';
+  session.firstWritingDone = false;
+  session.secondWritingDone = false;
+  state.firstHandwriting.clear();
+  state.secondHandwriting.clear();
   session.reverse = card.module === 'garden' && card.subtype === 'literacy' && state.reverseGarden && Math.random() < .5;
   const question = questionForCard(card, { reverse: session.reverse });
   const total = session.cards.length;
   $('studyCount').textContent = `${session.isExtra ? '加练' : '本轮'}第 ${session.index + 1} / ${total} 题`;
   $('studyStatus').textContent = session.isExtra ? '额外复习' : '本轮专注';
   $('studyProgressBar').style.width = `${session.index / total * 100}%`;
-  $('cardModule').textContent = modulesById[card.module]?.label || card.module;
+  $('cardModule').textContent = categoryLabel(card);
   $('cardUnit').textContent = `第${card.textbookUnit || '—'}单元`;
   $('cardTopic').textContent = card.topic || card.gardenSection || '教材练习';
   $('cardSource').textContent = displaySource(card);
   $('cardTitle').textContent = question.title;
   $('questionText').textContent = question.prompt;
-  $('answerText').textContent = question.answer;
+  $('answerText').innerHTML = answerHtmlForCard(card, { reverse: session.reverse });
   $('answerReveal').classList.add('hidden');
+  $('practiceCompare').classList.remove('has-answer');
   $('showAnswerButton').classList.remove('hidden');
-  $('showAnswerButton').disabled = card.module === 'writing';
-  $('writingPrompt').classList.toggle('hidden', card.module !== 'writing');
-  $('secondWritingBlock').classList.toggle('hidden', card.module !== 'writing');
-  $('firstHandwritingButton').disabled = false;
+  $('firstWritingBlock').classList.toggle('hidden', !needsFirstHandwriting(card));
+  $('secondWritingBlock').classList.toggle('hidden', !needsSecondHandwriting(card));
+  $('firstWritingLabel').textContent = card.module === 'vocab' ? '先在这里写出词语' : '先在这里写出目标字';
+  $('secondWritingGuide').textContent = '再写一次';
   setRatingsEnabled(false);
-  if (card.module === 'writing') syncWritingStatus();
+  syncHandwritingStatus();
+  requestAnimationFrame(() => state.firstHandwriting.resize());
 }
 
 function revealAnswer() {
   const session = state.session;
   if (!session) return;
-  if (session.card.module === 'writing' && !session.writingFirstDone) { showNotice('请先打开全屏手写，完成第一次书写。'); return; }
+  if (!canRevealAnswer(session.card, session)) {
+    $('firstWritingStatus').textContent = '请先在本页画板完成书写。';
+    return;
+  }
   session.answerRevealed = true;
   $('answerReveal').classList.remove('hidden');
+  $('practiceCompare').classList.add('has-answer');
   $('showAnswerButton').classList.add('hidden');
-  if (session.card.module === 'writing') syncWritingStatus(); else setRatingsEnabled(true);
+  syncHandwritingStatus();
+  requestAnimationFrame(() => state.secondHandwriting.resize());
 }
 
-function openHandwriting(phase) {
-  if (!state.session?.card || state.session.card.module !== 'writing') return;
-  state.handwritingPhase = phase;
-  $('handwritingTitle').textContent = phase === 'first' ? '第一次书写：根据题面提示写出生字' : `再次书写：${state.session.card.char}`;
-  state.handwriting.clear();
-  void state.handwriting.open();
-}
-
-function handwritingDone({ strokes }) {
+function handwritingChanged(phase) {
   const session = state.session;
-  if (!session || session.card.module !== 'writing') return;
-  if (state.handwritingPhase === 'first') {
-    session.writingFirstDone = Boolean(strokes);
-    if (!strokes) showNotice('第一次书写还没有笔画，请再写一次。');
-  } else if (state.handwritingPhase === 'second') {
-    session.writingSecondDone = Boolean(strokes);
-  }
-  state.handwritingPhase = null;
-  syncWritingStatus();
+  if (!session || !needsFirstHandwriting(session.card)) return;
+  if (phase === 'first') session.firstWritingDone = false;
+  if (phase === 'second') session.secondWritingDone = false;
+  syncHandwritingStatus();
+}
+
+function handwritingDone(phase, { strokes }) {
+  const session = state.session;
+  if (!session || !needsFirstHandwriting(session.card)) return;
+  if (phase === 'first') session.firstWritingDone = Boolean(strokes);
+  if (phase === 'second' && needsSecondHandwriting(session.card)) session.secondWritingDone = Boolean(strokes);
+  syncHandwritingStatus();
 }
 
 async function recordReview(card, rating) {
@@ -318,7 +323,7 @@ async function recordReview(card, rating) {
 
 async function rateCurrent(rating) {
   const session = state.session;
-  if (!session?.answerRevealed || !writingReadyForRating()) return;
+  if (!session || !canRateCard(session.card, session)) return;
   document.querySelectorAll('.ratings button').forEach((button) => { button.disabled = true; });
   await recordReview(session.card, rating);
   session.index += 1;
@@ -455,8 +460,6 @@ document.addEventListener('click', (event) => {
   const rating = event.target.closest('[data-rating]');
   if (rating) { void rateCurrent(rating.dataset.rating); return; }
   if (event.target.closest('#showAnswerButton')) { revealAnswer(); return; }
-  if (event.target.closest('#firstHandwritingButton')) { openHandwriting('first'); return; }
-  if (event.target.closest('#secondHandwritingButton')) { openHandwriting('second'); return; }
 });
 
 $('selectAllUnits').addEventListener('change', (event) => setAllRange(event.target.checked));
@@ -477,11 +480,6 @@ $('logoutButton').addEventListener('click', async () => {
   readLocal(); refreshDashboard();
 });
 $('reverseGarden').addEventListener('change', (event) => { state.reverseGarden = event.target.checked; });
-$('secondWritingInput').addEventListener('input', (event) => {
-  if (!state.session?.card || state.session.card.module !== 'writing') return;
-  state.session.writingSecondTyped = event.target.value.trim() === state.session.card.char;
-  syncWritingStatus();
-});
 document.addEventListener('keydown', (event) => {
   if (event.code !== 'Space' || !state.session || state.session.answerRevealed) return;
   const target = event.target;
@@ -490,7 +488,14 @@ document.addEventListener('keydown', (event) => {
   revealAnswer();
 });
 
-state.handwriting = createHandwritingController($('handwritingOverlay'), { onDone: handwritingDone });
+state.firstHandwriting = createHandwritingController($('firstWritingBlock'), {
+  onChange: () => handwritingChanged('first'),
+  onDone: (result) => handwritingDone('first', result),
+});
+state.secondHandwriting = createHandwritingController($('secondWritingBlock'), {
+  onChange: () => handwritingChanged('second'),
+  onDone: (result) => handwritingDone('second', result),
+});
 bindRangeEvents();
 refreshDashboard();
 void initAuth();

@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f6efe5" />
-  <title>五上语文·四模块打卡</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.0" />
+  <title>五上语文·三模块打卡</title>
+  <link rel="stylesheet" href="styles.css?v=3.1.0" />
 </head>
 <body>
   <main class="shell">
     <header class="topbar">
-      <a class="brand" href="#home" aria-label="五上语文打卡首页"><span class="brand-mark">文</span><div><small>四模块间隔复习</small><h1>五上语文·打卡</h1></div></a>
-      <div class="top-actions"><div class="today-pill"><span>今日总题</span><strong id="todayCount">0</strong><em>/ 80</em></div><button id="accountButton" class="account-button" type="button">登录 / 注册</button></div>
+      <a class="brand" href="#home" aria-label="五上语文打卡首页"><span class="brand-mark">文</span><div><small>三模块间隔复习</small><h1>五上语文·打卡</h1></div></a>
+      <div class="top-actions"><div class="today-pill"><span>今日总题</span><strong id="todayCount">0</strong><em>/ 60</em></div><button id="accountButton" class="account-button" type="button">登录 / 注册</button></div>
     </header>
 
     <section id="authPanel" class="panel auth-panel hidden" aria-label="学习账号">
@@ -21,26 +21,57 @@
     </section>
 
     <section id="home" class="hero panel">
-      <div class="hero-copy"><p class="eyebrow">写字 · 识字 · 词语 · 园地</p><h2>每天四个模块，<br /><span>把课本记成自己的。</span></h2><p>先回忆，再核对答案。每个模块都可以按教材单元或单篇课文选择，今天最多练 20 题。</p><div class="hero-tags"><span>每模块 20 题</span><span>整单元 / 单课筛选</span><span>支持 iPad 全屏手写</span></div></div>
+      <div class="hero-copy"><p class="eyebrow">汉字 · 词语 · 园地</p><h2>每天三个模块，<br /><span>把课本记成自己的。</span></h2><p>先在卡片上书写，再翻面保留笔迹核对答案。每个模块都可以按教材单元或单篇课文选择，今天最多练 20 题。</p><div class="hero-tags"><span>每模块 20 题</span><span>整单元 / 单课筛选</span><span>电脑 · 手机 · iPad 手写</span></div></div>
       <div class="hero-art" aria-hidden="true"><div class="paper-card"><span>五上语文</span><b>每日<br />打卡</b><i>✦</i></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="ink-dot dot-one"></div><div class="ink-dot dot-two"></div></div>
     </section>
 
-    <section class="module-section" aria-labelledby="moduleHeading"><div class="section-lead"><div><p class="eyebrow">选择练习模块</p><h2 id="moduleHeading">四大模块，分开记录</h2><p>点选模块后选择教材范围；每个模块的每日进度独立计算。</p></div><div class="overall-summary"><strong id="moduleCompleteCount">0 / 4</strong><span>模块今日完成</span><em id="overallQuestionCount">0 / 80 题</em></div></div><div id="moduleCards" class="module-cards"></div></section>
+    <section class="module-section" aria-labelledby="moduleHeading"><div class="section-lead"><div><p class="eyebrow">选择练习模块</p><h2 id="moduleHeading">三大模块，分别打卡</h2><p>写字表与识字表合并到“汉字”，原有学习记录继续保留。</p></div><div class="overall-summary"><strong id="moduleCompleteCount">0 / 3</strong><span>模块今日完成</span><em id="overallQuestionCount">0 / 60 题</em></div></div><div id="moduleCards" class="module-cards"></div></section>
 
     <section id="rangePanel" class="panel range-panel hidden" aria-labelledby="rangeTitle"><div class="section-head"><div><p class="eyebrow">第二步</p><h2 id="rangeTitle">选择教材范围</h2><p id="rangeDescription" class="hint"></p><p id="recognitionAudit" class="audit-note hidden"></p></div><button id="rangeBackButton" class="secondary compact" type="button">← 返回模块</button></div><div class="range-toolbar"><label class="select-all"><input id="selectAllUnits" type="checkbox" /> 全选单元</label><button id="clearUnits" class="secondary compact" type="button">清空</button><label class="order-option"><input type="radio" name="card-order" value="random" checked /> 随机出题</label><label class="order-option"><input type="radio" name="card-order" value="sequential" /> 按教材顺序</label><label id="reverseGardenControl" class="order-option hidden"><input id="reverseGarden" type="checkbox" /> 偶尔反向提示</label></div><div id="rangeHint" class="range-hint">请选择一个或多个单元。</div><div id="rangeList" class="range-list"></div><div class="range-footer"><div><strong id="rangeQuestionCount">题库 0 题</strong><span id="rangeMaxCount">本轮最多 20 题</span></div><button id="startModuleButton" class="primary large" type="button">开始本模块 <span>→</span></button></div></section>
 
-    <section class="dashboard"><div class="stat panel"><span>今日总完成</span><strong id="todayStudyCount">0</strong><small>题 / 80</small></div><div class="stat panel"><span>待复习</span><strong id="dueCount">0</strong><small>张卡片</small></div><div class="stat panel"><span>已掌握</span><strong id="learnedCount">0</strong><small>张卡片</small></div><div class="stat panel"><span>题库总量</span><strong id="totalCount">0</strong><small>四个模块</small></div></section>
+    <section class="dashboard"><div class="stat panel"><span>今日总完成</span><strong id="todayStudyCount">0</strong><small>题 / 60</small></div><div class="stat panel"><span>待复习</span><strong id="dueCount">0</strong><small>张卡片</small></div><div class="stat panel"><span>已掌握</span><strong id="learnedCount">0</strong><small>张卡片</small></div><div class="stat panel"><span>题库总量</span><strong id="totalCount">0</strong><small>三个模块</small></div></section>
 
     <section class="panel module-progress-panel"><div class="section-head"><div><p class="eyebrow">今日模块进度</p><h2>每个模块单独完成 20 题</h2></div><span class="hint">完成题目后自动记录</span></div><div id="moduleProgressRows" class="module-progress-rows"></div></section>
 
-    <section id="studyPanel" class="panel study hidden" aria-live="polite"><div class="study-top"><button id="studyBackButton" class="back" type="button">← 返回范围</button><span id="studyCount">今日第 1 / 20 题</span><span id="studyStatus">本轮专注</span></div><div class="progress-track"><span id="studyProgressBar"></span></div><article id="card" class="card"><div class="card-meta"><span id="cardModule">模块</span><span id="cardUnit">第 1 单元</span></div><div class="card-meta secondary-meta"><span id="cardTopic">主题</span><span id="cardSource">来源</span></div><h2 id="cardTitle">准备好了吗？</h2><div id="questionText" class="question-text"></div><div id="writingPrompt" class="writing-prompt hidden"><span>写字题需要两次书写</span><button id="firstHandwritingButton" class="primary" type="button">打开全屏手写</button><small id="firstWritingStatus">还没有完成第一次书写</small></div><button id="showAnswerButton" class="primary show-answer" type="button">空格键 / 点击查看答案 <span>↘</span></button><div id="answerReveal" class="answer-reveal hidden"><div class="answer-label">答案</div><div id="answerText" class="answer-text"></div><div id="secondWritingBlock" class="writing-prompt hidden"><span>看完答案后，再写一次目标字</span><button id="secondHandwritingButton" class="secondary" type="button">再次全屏手写</button><label class="rewrite-input">键盘复写<input id="secondWritingInput" type="text" inputmode="text" autocomplete="off" maxlength="1" aria-label="再次写出目标字" /></label><small id="secondWritingStatus">请再次全屏手写，或在输入框中正确写出目标字</small></div><p class="rating-title">这道题的感觉如何？</p><div class="ratings"><button data-rating="again" class="again" type="button" disabled>重来<small>10 分钟</small></button><button data-rating="hard" class="hard" type="button" disabled>困难<small>较快复习</small></button><button data-rating="good" class="good" type="button" disabled>记住<small>正常间隔</small></button><button data-rating="easy" class="easy" type="button" disabled>简单<small>更久以后</small></button></div></div></article><div id="completeState" class="complete hidden"><span>✦</span><h2 id="completeTitle">本模块完成！</h2><p id="completeMessage"></p><div class="complete-actions"><button id="moreModuleButton" class="secondary" type="button">继续加练</button><button id="completeBackButton" class="primary" type="button">回到模块选择</button></div></div></section>
+    <section id="studyPanel" class="panel study hidden" aria-live="polite">
+      <div class="study-top"><button id="studyBackButton" class="back" type="button">← 返回范围</button><span id="studyCount">今日第 1 / 20 题</span><span id="studyStatus">本轮专注</span></div>
+      <div class="progress-track"><span id="studyProgressBar"></span></div>
+      <article id="card" class="card">
+        <div class="card-meta"><span id="cardModule">模块</span><span id="cardUnit">第 1 单元</span></div>
+        <div class="card-meta secondary-meta"><span id="cardTopic">主题</span><span id="cardSource">来源</span></div>
+        <h2 id="cardTitle">准备好了吗？</h2>
+        <div id="practiceCompare" class="practice-compare">
+          <section class="question-side" aria-label="题目和我的书写">
+            <div id="questionText" class="question-text"></div>
+            <div id="firstWritingBlock" class="inline-handwriting hidden">
+              <div class="handwriting-head"><strong id="firstWritingLabel">先在这里写</strong><span>笔迹会保留，翻面后可直接对照</span></div>
+              <div class="handwriting-stage"><canvas id="firstHandwritingCanvas" aria-label="第一次手写画板"></canvas><div class="handwriting-guide" aria-hidden="true">在这里书写</div></div>
+              <div class="handwriting-toolbar"><button data-handwriting-undo class="secondary compact" type="button">撤销</button><button data-handwriting-clear class="secondary compact" type="button">清空</button><button data-handwriting-eraser class="secondary compact" type="button">橡皮</button><button data-handwriting-done class="primary compact" type="button">完成书写</button></div>
+              <small id="firstWritingStatus" class="writing-status">还没有完成第一次书写</small>
+            </div>
+            <button id="showAnswerButton" class="primary show-answer" type="button">空格键 / 点击查看答案 <span>↘</span></button>
+          </section>
+          <section id="answerReveal" class="answer-reveal hidden" aria-label="正确答案">
+            <div class="answer-label">答案 · 请与左侧／上方笔迹对照</div>
+            <div id="answerText" class="answer-text"></div>
+            <div id="secondWritingBlock" class="inline-handwriting second-writing hidden">
+              <div class="handwriting-head"><strong>看完答案，再写一次</strong><span>使用本页画板完成复写</span></div>
+              <div class="handwriting-stage"><canvas id="secondHandwritingCanvas" aria-label="答案后第二次手写画板"></canvas><div id="secondWritingGuide" class="handwriting-guide" aria-hidden="true">再写一次</div></div>
+              <div class="handwriting-toolbar"><button data-handwriting-undo class="secondary compact" type="button">撤销</button><button data-handwriting-clear class="secondary compact" type="button">清空</button><button data-handwriting-eraser class="secondary compact" type="button">橡皮</button><button data-handwriting-done class="primary compact" type="button">完成复写</button></div>
+              <small id="secondWritingStatus" class="writing-status">请完成第二次手写后再自评</small>
+            </div>
+            <p class="rating-title">这道题的感觉如何？</p>
+            <div class="ratings"><button data-rating="again" class="again" type="button" disabled>重来<small>10 分钟</small></button><button data-rating="hard" class="hard" type="button" disabled>困难<small>较快复习</small></button><button data-rating="good" class="good" type="button" disabled>记住<small>正常间隔</small></button><button data-rating="easy" class="easy" type="button" disabled>简单<small>更久以后</small></button></div>
+          </section>
+        </div>
+      </article>
+      <div id="completeState" class="complete hidden"><span>✦</span><h2 id="completeTitle">本模块完成！</h2><p id="completeMessage"></p><div class="complete-actions"><button id="moreModuleButton" class="secondary" type="button">继续加练</button><button id="completeBackButton" class="primary" type="button">回到模块选择</button></div></div>
+    </section>
 
-    <section class="panel how"><p class="eyebrow">使用提示</p><h2>回忆与书写，都是记忆的一部分。</h2><div><article><b>1</b><p>选模块和范围；题库不足 20 题时按实际数量出题。</p></article><article><b>2</b><p>写字题先写一次、翻面核对，再全屏手写或正确输入目标字。</p></article><article><b>3</b><p>如实评级，困难的卡片会更快回来；四模块进度彼此独立。</p></article></div></section>
-    <footer>五上语文学习网页 · 内容整理自所附识字、写字、词语与语文园地资料 · <span>v3.0.0</span></footer>
+    <section class="panel how"><p class="eyebrow">使用提示</p><h2>回忆与书写，都是记忆的一部分。</h2><div><article><b>1</b><p>选模块和范围；题库不足 20 题时按实际数量出题。</p></article><article><b>2</b><p>汉字先写一次、翻面核对后再写一次；词语先手写再核对。</p></article><article><b>3</b><p>如实评级，困难的卡片会更快回来；三个模块分别记录进度。</p></article></div></section>
+    <footer>五上语文学习网页 · 内容整理自所附识字、写字、词语与语文园地资料 · <span>v3.1.0</span></footer>
   </main>
 
-  <section id="handwritingOverlay" class="handwriting-overlay hidden" aria-modal="true" role="dialog" aria-label="全屏手写"><div class="handwriting-head"><strong id="handwritingTitle">请书写目标字</strong><span>不自动识别，请写完后自行核对</span></div><div class="handwriting-stage"><canvas id="handwritingCanvas" aria-label="手写画板"></canvas><div class="handwriting-guide" aria-hidden="true">在这里书写</div></div><div class="handwriting-toolbar"><button data-handwriting-undo class="secondary" type="button">撤销</button><button data-handwriting-clear class="secondary" type="button">清空</button><button data-handwriting-eraser class="secondary" type="button">橡皮</button><button data-handwriting-done class="primary" type="button">完成书写</button></div></section>
-
-  <script type="module" src="app.js?v=3.0.0"></script>
+  <script type="module" src="app.js?v=3.1.0"></script>
 </body>
 </html>
