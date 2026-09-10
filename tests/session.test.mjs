@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import { buildSession, isDue, sessionQuestionCount } from '../js/session.js';
+import { cardsInSelection } from '../js/selection.js';
+
+const cards = Array.from({ length: 25 }, (_, index) => ({ id: `card-${index + 1}`, module: 'writing', textbookUnit: 1, lessonNumber: index < 10 ? 1 : 2 }));
+assert.equal(sessionQuestionCount(cards.slice(0, 1)), 1);
+assert.equal(sessionQuestionCount(cards.slice(0, 2)), 2);
+assert.equal(sessionQuestionCount(cards.slice(0, 19)), 19);
+assert.equal(sessionQuestionCount([]), 0);
+assert.equal(cardsInSelection(cards, 'writing', { units: new Set([1]), lessons: new Set() }).length, 25);
+assert.equal(cardsInSelection(cards, 'writing', { units: new Set(), lessons: new Set([1]) }).length, 10);
+const due = { repetitions: 1, dueAt: new Date(Date.now() - 1000).toISOString() };
+const future = { repetitions: 1, dueAt: new Date(Date.now() + 86400000).toISOString() };
+assert.equal(isDue(cards[0], { [cards[0].id]: due }), true);
+assert.equal(isDue(cards[1], { [cards[1].id]: future }), false);
+const session = buildSession({ candidates: cards, progress: { [cards[0].id]: future }, target: 20, order: 'sequential', usedTodayIds: new Set([cards[1].id]) });
+assert.equal(session.cards.length, 20);
+assert.equal(new Set(session.cards.map((card) => card.id)).size, 20);
+assert.ok(session.cards.every((card) => card.id !== cards[1].id));
+assert.equal(session.cards[0].id, cards[2].id);
+const exhausted = buildSession({ candidates: cards.slice(0, 2), usedTodayIds: new Set(cards.slice(0, 2).map((card) => card.id)), target: 20 });
+assert.equal(exhausted.cards.length, 0);
+console.log('session.test: ok');

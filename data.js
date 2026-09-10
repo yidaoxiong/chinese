@@ -5,7 +5,7 @@ export const reciteCards = [
   { id: 'idiom-ru-hu-tian-yi', kind: 'idiom', title: '成语｜首字拼音提示', prompt: '提示：第一个字的拼音是 rú。', answer: '如虎添翼\n释义：像老虎长上了翅膀，比喻强者得到新的帮助更加强大，恶者增添力量更加凶恶。', source: '语文园地一·日积月累' },
   { id: 'idiom-long-ma-jing-shen', kind: 'idiom', title: '成语｜首字拼音提示', prompt: '提示：第一个字的拼音是 lóng。', answer: '龙马精神\n释义：用来指健旺的精神。', source: '语文园地一·日积月累' },
   { id: 'idiom-he-li-ji-qun', kind: 'idiom', title: '成语｜首字拼音提示', prompt: '提示：第一个字的拼音是 hè。', answer: '鹤立鸡群\n释义：比喻一个人的才能或仪表在一群人里显得很突出。', source: '语文园地一·日积月累' },
-  { id: 'idiom-yu-yue-long-men', kind: 'idiom', title: '成语｜首字拼音提示', prompt: '提示：第一个字的拼音是 yú。', answer: '鱼跃龙门\n释义：比喻事业成功、金榜题名，地位瞬间提升。', source: '语文园地一·日积月累' },
+  { id: 'idiom-ru-yu-de-shui', kind: 'idiom', title: '成语｜首字拼音提示', prompt: '提示：第一个字的拼音是 rú。', answer: '如鱼得水\n释义：比喻得到跟自己十分投合的人或对自己很合适的环境。', source: '语文园地一·日积月累' },
   { id: 'idiom-yi-ma-dang-xian', kind: 'idiom', title: '成语｜首字拼音提示', prompt: '提示：第一个字的拼音是 yī。', answer: '一马当先\n释义：作战时策马冲锋在前，形容领先或带头。', source: '语文园地一·日积月累' },
   { id: 'idiom-shu-mu-cun-guang', kind: 'idiom', title: '成语｜首字拼音提示', prompt: '提示：第一个字的拼音是 shǔ。', answer: '鼠目寸光\n释义：形容眼光短，见识浅。', source: '语文园地一·日积月累' },
   { id: 'idiom-bao-tou-shu-cuan', kind: 'idiom', title: '成语｜首字拼音提示', prompt: '提示：第一个字的拼音是 bào。', answer: '抱头鼠窜\n释义：形容急忙逃走的狼狈相。', source: '语文园地一·日积月累' },
