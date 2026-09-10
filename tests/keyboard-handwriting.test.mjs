@@ -62,6 +62,8 @@ const [appSource, htmlSource, handwritingSource, cssSource] = await Promise.all(
 ]);
 assert.match(htmlSource, /id="firstHandwritingCanvas"/u);
 assert.match(htmlSource, /id="secondHandwritingCanvas"/u);
+assert.match(htmlSource, /id="authBackdrop"/u);
+assert.match(htmlSource, /aria-controls="authPanel" aria-expanded="false"/u);
 assert.match(htmlSource, /data-character-category="writing"/u);
 assert.match(htmlSource, /data-character-category="recognition"/u);
 assert.doesNotMatch(htmlSource, /handwritingOverlay|secondWritingInput|键盘复写/u);
@@ -69,10 +71,14 @@ assert.doesNotMatch(handwritingSource, /requestFullscreen|exitFullscreen|handwri
 assert.match(appSource, /state\.firstHandwriting\.clear\(\)/u);
 assert.match(appSource, /answerText'\)\.innerHTML = answerHtmlForCard/u);
 assert.match(appSource, /event\.code !== 'Space'/u);
+assert.match(appSource, /function setAuthPanelOpen\(open\)/u);
+assert.match(appSource, /panel\.scrollIntoView\(\{ behavior: 'smooth', block: 'start' \}\)/u);
+assert.match(appSource, /event\.key === 'Escape'/u);
 assert.match(appSource, /state\.reverseGarden = event\.target\.checked/u);
 const ids = [...htmlSource.matchAll(/\sid="([^"]+)"/gu)].map((match) => match[1]);
 assert.equal(new Set(ids).size, ids.length, 'HTML ids must be unique');
 assert.match(cssSource, /@media \(max-width: 480px\)[\s\S]*\.module-cards, \.dashboard \{ grid-template-columns: minmax\(0, 1fr\); \}/u);
+assert.match(cssSource, /@media \(max-width: 650px\)[\s\S]*\.auth-panel \{ position: fixed; z-index: 1000;/u);
 assert.match(cssSource, /\.shell \{ width: calc\(100% - 22px\); max-width: 600px;/u);
 assert.doesNotMatch(cssSource, /overflow-x:\s*hidden/u);
 console.log('keyboard-handwriting.test: ok');

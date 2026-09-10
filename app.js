@@ -56,6 +56,23 @@ function setMessage(message) {
   if (element) element.textContent = message || '';
 }
 
+function setAuthPanelOpen(open) {
+  const panel = $('authPanel');
+  panel.classList.toggle('hidden', !open);
+  $('authBackdrop').classList.toggle('hidden', !open);
+  $('accountButton').setAttribute('aria-expanded', String(open));
+  panel.setAttribute('aria-hidden', String(!open));
+  document.body.classList.toggle('auth-open', open);
+  if (open) requestAnimationFrame(() => {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    panel.focus({ preventScroll: true });
+  });
+}
+
+function toggleAuthPanel() {
+  setAuthPanelOpen($('authPanel').classList.contains('hidden'));
+}
+
 function localModuleStats() { return moduleStats(state.logs, dateKey()); }
 
 function remoteModuleStats() {
@@ -485,8 +502,9 @@ $('rangeBackButton').addEventListener('click', goHome);
 $('studyBackButton').addEventListener('click', closeStudy);
 $('completeBackButton').addEventListener('click', goHome);
 $('moreModuleButton').addEventListener('click', () => startModule(true));
-$('accountButton').addEventListener('click', () => $('authPanel').classList.toggle('hidden'));
-$('closeAuthButton').addEventListener('click', () => $('authPanel').classList.add('hidden'));
+$('accountButton').addEventListener('click', toggleAuthPanel);
+$('closeAuthButton').addEventListener('click', () => setAuthPanelOpen(false));
+$('authBackdrop').addEventListener('click', () => setAuthPanelOpen(false));
 $('authForm').addEventListener('submit', (event) => { event.preventDefault(); void authRequest('login').catch((error) => setMessage(error.message)); });
 $('registerButton').addEventListener('click', () => { void authRequest('register').catch((error) => setMessage(error.message)); });
 $('logoutButton').addEventListener('click', async () => {
@@ -497,6 +515,10 @@ $('logoutButton').addEventListener('click', async () => {
 });
 $('reverseGarden').addEventListener('change', (event) => { state.reverseGarden = event.target.checked; });
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !$('authPanel').classList.contains('hidden')) {
+    setAuthPanelOpen(false);
+    return;
+  }
   if (event.code !== 'Space' || !state.session || state.session.answerRevealed) return;
   const target = event.target;
   if (target.matches('input, textarea, select, button, a, [contenteditable="true"]')) return;

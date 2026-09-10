@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f6efe5" />
   <title>五上语文·三模块打卡</title>
-  <link rel="stylesheet" href="styles.css?v=3.2.0" />
+  <link rel="stylesheet" href="styles.css?v=3.2.1" />
 </head>
 <body>
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="#home" aria-label="五上语文打卡首页"><span class="brand-mark">文</span><div><small>三模块间隔复习</small><h1>五上语文·打卡</h1></div></a>
-      <div class="top-actions"><div class="today-pill"><span>今日总题</span><strong id="todayCount">0</strong><em>/ 60</em></div><button id="accountButton" class="account-button" type="button">登录 / 注册</button></div>
+      <div class="top-actions"><div class="today-pill"><span>今日总题</span><strong id="todayCount">0</strong><em>/ 60</em></div><button id="accountButton" class="account-button" type="button" aria-controls="authPanel" aria-expanded="false">登录 / 注册</button></div>
     </header>
 
-    <section id="authPanel" class="panel auth-panel hidden" aria-label="学习账号">
+    <button id="authBackdrop" class="auth-backdrop hidden" type="button" aria-label="关闭登录窗口"></button>
+    <section id="authPanel" class="panel auth-panel hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-label="学习账号" tabindex="-1">
       <div class="section-head"><div><p class="eyebrow">学习账号</p><h2>和 Slashbro 学习工具共用账号</h2></div><button id="closeAuthButton" class="icon-button" type="button" aria-label="关闭">×</button></div>
       <div id="authLoggedOut"><p class="hint">登录后复习记录可以在设备之间同步；未登录也能先练习。</p><form id="authForm"><label>账号<input id="usernameInput" autocomplete="username" maxlength="24" placeholder="3-24 个字母、数字或汉字" required /></label><label>密码<input id="passwordInput" type="password" autocomplete="current-password" minlength="8" maxlength="72" placeholder="至少 8 位" required /></label><div class="auth-actions"><button class="primary" type="submit">登录</button><button id="registerButton" class="secondary" type="button">注册并登录</button></div></form><p id="authMessage" class="message">账号同步状态将在这里显示。</p></div>
       <div id="authLoggedIn" class="hidden"><p class="welcome">你好，<strong id="accountName"></strong>！</p><p class="hint">你的复习记录和每日进度会自动同步。</p><button id="logoutButton" class="secondary" type="button">退出登录</button></div>
@@ -69,9 +70,9 @@
     </section>
 
     <section class="panel how"><p class="eyebrow">使用提示</p><h2>回忆与书写，都是记忆的一部分。</h2><div><article><b>1</b><p>选模块和范围；题库不足 20 题时按实际数量出题。</p></article><article><b>2</b><p>汉字先写一次、翻面核对后再写一次；词语先手写再核对。</p></article><article><b>3</b><p>如实评级，困难的卡片会更快回来；三个模块分别记录进度。</p></article></div></section>
-    <footer>五上语文学习网页 · 内容整理自所附识字、写字、词语与语文园地资料 · <span>v3.2.0</span></footer>
+    <footer>五上语文学习网页 · 内容整理自所附识字、写字、词语与语文园地资料 · <span>v3.2.1</span></footer>
   </main>
 
-  <script type="module" src="app.js?v=3.2.0"></script>
+  <script type="module" src="app.js?v=3.2.1"></script>
 </body>
 </html>

@@ -181,6 +181,7 @@ button, p, h1, h2, h3, span, small, dd { overflow-wrap: anywhere; }
 .how article b { display: grid; place-items: center; flex: 0 0 26px; width: 26px; height: 26px; color: #fff; background: var(--orange); border-radius: 50%; font-size: 12px; }
 .how article p { margin: 2px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .auth-panel { margin-bottom: 18px; padding: 23px 28px; }
+.auth-backdrop { display: none; }
 .section-head { align-items: center; }
 .icon-button { padding: 4px 11px; font-size: 24px; line-height: 1; }
 .auth-panel h2 { font-size: 19px; }
@@ -210,6 +211,9 @@ footer { margin-top: 27px; color: #a2958a; text-align: center; font-size: 11px; 
   .practice-compare.has-answer { grid-template-columns: 1fr; }
 }
 @media (max-width: 650px) {
+  body.auth-open { overflow: hidden; }
+  .auth-backdrop:not(.hidden) { display: block; position: fixed; inset: 0; z-index: 999; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 0; background: rgba(41,40,50,.38); backdrop-filter: blur(2px); }
+  .auth-panel { position: fixed; z-index: 1000; top: max(12px, env(safe-area-inset-top)); right: 11px; left: 11px; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); margin: 0; padding: 21px 18px; overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 24px 70px rgba(41,40,50,.28); }
   .shell { width: calc(100% - 22px); max-width: 600px; padding-top: 18px; }
   .topbar { align-items: flex-start; }
   .brand { flex: 1 1 auto; min-width: 0; }
