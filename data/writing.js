@@ -1,6 +1,8 @@
-import { writingItems as sourceWritingItems, vocabItems as sourceVocabItems } from '../data.js';
+import { sourceWritingItems, sourceVocabItems } from './source-tables.js';
+import { writingItems as legacyWritingItems } from '../data.js';
 import { contentVersion, unitForLesson, normalizeLessonNumber } from './catalog.js';
 import { charMeanings, wordMeanings } from './meanings.js';
+import { vocabMeaningFor } from './vocab.js';
 
 const COMMON_WORDS = {
   浸: ['浸泡', '浸没', '沉浸', '浸润'], 荒: ['荒凉', '荒地', '荒芜', '荒野'], 旷: ['空旷', '旷课', '旷达', '旷野'], 芽: ['发芽', '豆芽', '嫩芽', '芽菜'], 矮: ['矮小', '矮墙', '矮人', '矮子'],
@@ -261,6 +263,57 @@ const CURATED_ADDITIONAL_GLOSSES = {
   某: [['某些', '表示不确定的几个或一部分。'], ['某地', '不指明名称的地方。'], ['某种', '不明确指出的某一类。']],
 };
 
+// Accurate support words for characters newly restored from the supplied XLSX.
+// Rare morphemes intentionally have fewer than three entries; we do not invent
+// compounds just to fill the answer layout.
+Object.assign(CURATED_ADDITIONAL_GLOSSES, {
+  笨: [['笨重', '庞大沉重；不灵巧。'], ['笨拙', '不聪明，不灵巧。'], ['愚笨', '头脑迟钝，不聪明。']],
+  靠: [['依靠', '凭借人或事物来达到目的。'], ['靠近', '彼此间的距离缩短。'], ['可靠', '可以信赖。']],
+  亩: [['亩产', '每亩土地的产量。'], ['田亩', '田地的总称。'], ['英亩', '英美制地积单位。']],
+  播: [['播种', '把种子播撒在土壤里。'], ['广播', '通过无线电或有线电向外传送声音、图像等。'], ['传播', '广泛散布。'], ['播放', '通过设备放送声音或影像。']],
+  吩: [['吩咐', '口头指派或命令。']],
+  咐: [['吩咐', '口头指派或命令。'], ['嘱咐', '告诉对方记住应该怎样做。']],
+  茅: [['茅草', '白茅一类的草本植物。'], ['茅屋', '用茅草盖的屋。'], ['名列前茅', '名次列在前面。']],
+  妨: [['妨碍', '使事情不能顺利进行。'], ['妨害', '有害于。'], ['不妨', '表示可以这样做，没有什么妨碍。']],
+  碍: [['妨碍', '使事情不能顺利进行。'], ['障碍', '阻挡前进的东西。'], ['阻碍', '使不能顺利通过或发展。']],
+  铜: [['铜铃', '用铜制成的铃。'], ['黄铜', '铜和锌的合金。'], ['铜牌', '铜制的牌；比赛中的第三名奖牌。']],
+  罢: [['罢工', '工人为实现某种要求而停止工作。'], ['罢免', '免去职务。'], ['罢休', '停止做某件事情。']],
+  托: [['托付', '委托别人照料或办理。'], ['委托', '请别人代办。'], ['寄托', '把理想、希望或感情放在某人或某事物上。']],
+  录: [['记录', '把事情写下来；也指记载下来的材料。'], ['录音', '把声音记录下来。'], ['目录', '按一定次序编排的篇目名称。']],
+  俯: [['俯冲', '从高处以较大角度快速向下冲。'], ['俯视', '从高处向下看。'], ['俯身', '弯下身子。']],
+  赤: [['赤道', '环绕地球中部的假想圆线。'], ['赤红', '鲜红。'], ['赤诚', '非常真诚。']],
+  宰: [['主宰', '掌握、支配。'], ['宰杀', '杀死牲畜、家禽等。'], ['屠宰', '宰杀牲畜。']],
+  措: [['措施', '针对某种情况采取的处理办法。'], ['举措', '举动；措施。'], ['措辞', '说话或作文时选用词句。']],
+  焦: [['焦急', '着急。'], ['焦点', '光线会聚的点；也比喻事情的集中点。'], ['焦虑', '着急忧虑。']],
+  灾: [['灾难', '自然或人为造成的严重损害。'], ['灾害', '自然或人为因素造成的祸害。'], ['救灾', '救济受灾地区和灾民。']],
+  吱: [['吱声', '出声；说话。'], ['嘎吱', '形容物体受压或摩擦时发出的声音。'], ['吱呀', '形容门窗等开合时发出的声音。']],
+  姑: [['姑娘', '年轻女子。'], ['姑妈', '父亲的姐妹。'], ['姑父', '姑母的丈夫。']],
+  娘: [['姑娘', '年轻女子。'], ['娘家', '已婚女子的父母家。'], ['新娘', '刚结婚或结婚不久的女子。']],
+  祭: [['祭祀', '旧俗备供品向神佛或祖先行礼。'], ['祭奠', '为死去的人举行仪式表示追念。'], ['祭品', '祭祀时供献的物品。']],
+  翁: [['老翁', '年老的男子。'], ['渔翁', '年老的渔夫。'], ['富翁', '拥有大量财产的人。']],
+  珍: [['珍贵', '价值大，意义深，值得珍爱。'], ['珍惜', '重视爱惜。'], ['珍珠', '某些贝类体内形成的圆粒。']],
+  组: [['组成', '组合而成。'], ['小组', '为工作、学习等组成的小集体。'], ['组织', '安排分散的人或事物使成为系统。']],
+  境: [['环境', '周围的情况和条件。'], ['境界', '事物达到的程度或表现的情况。'], ['边境', '靠近国界的地区。']],
+  略: [['省略', '免掉；略去。'], ['忽略', '没有注意到。'], ['策略', '根据形势制定的行动方针和办法。']],
+  棉: [['棉花', '棉的种子上所附的纤维，可供纺织。'], ['棉衣', '用棉花等絮成的衣服。'], ['棉被', '用棉花等作胎的被子。']],
+  怂: [['怂恿', '鼓动别人做某事，多指不好的事。'], ['认怂', '口语中指承认自己胆怯或服输。']],
+  恿: [['怂恿', '鼓动别人做某事，多指不好的事。']],
+  掏: [['掏出', '从里面取出来。'], ['掏钱', '拿出钱来。'], ['掏空', '把里面的东西全部取出。']],
+  蚕: [['蚕丝', '蚕吐的丝。'], ['蚕茧', '蚕吐丝结成的壳。'], ['养蚕', '饲养蚕。']],
+  省: [['节省', '使耗费减少。'], ['省略', '免掉；略去。'], ['省份', '我国的一级行政区域。']],
+  挣: [['挣钱', '通过劳动或经营取得钱。'], ['挣脱', '用力摆脱。'], ['挣扎', '用力支撑或摆脱困境。']],
+  茫: [['茫然', '完全不知道的样子。'], ['苍茫', '空阔辽远，没有边际。'], ['渺茫', '因距离远而模糊不清；也指希望很小。']],
+  屑: [['纸屑', '碎纸片。'], ['木屑', '木头碎末。'], ['不屑', '认为不值得。']],
+  窑: [['窑洞', '在土山中挖成的洞穴式住宅。'], ['煤窑', '开采煤的矿井。'], ['砖窑', '烧砖的窑。']],
+  舅: [['舅舅', '母亲的兄弟。'], ['舅父', '母亲的兄弟。'], ['舅妈', '舅父的妻子。']],
+  津: [['津津有味', '形容很有兴趣地谈论，或吃得很有味道。'], ['津贴', '工资以外按规定发给的补助。'], ['问津', '探询渡口；比喻探问情况或尝试。']],
+  述: [['述说', '叙述说明。'], ['叙述', '把事情的前后经过记载下来或说出来。'], ['描述', '形象地叙说。']],
+  衰: [['衰老', '年老而精力衰弱。'], ['衰弱', '身体不强健或事物不强盛。'], ['衰退', '由强盛转向衰弱。']],
+  遣: [['派遣', '命人到某处做某项工作。'], ['消遣', '用自己感觉愉快的事来消磨时间。'], ['遣送', '把人送回原地或指定地点。']],
+  哗: [['哗啦', '形容撞击声、流水声等。'], ['哗笑', '喧闹地笑。'], ['喧哗', '声音大而杂乱。']],
+  哇: [['好哇', '“哇”在句末表示赞同或感叹。'], ['哇哇', '形容哭声或呕吐声。'], ['哇啦', '形容大声说话或吵闹的声音。']],
+});
+
 const COMMON_MEANINGS = {
   浸泡: '把东西放在液体里泡。', 荒凉: '人烟少，冷落没有生气。', 空旷: '地方开阔，没有遮挡。', 发芽: '种子或植物长出嫩芽。', 矮小: '高度小。', 山丘: '小山。', 作坊: '手工生产物品的小工场。',
   墨水: '写字、绘画用的黑色液体。', 抄写: '照着原文写下来。', 敲门: '用手或器物叩门。', 喧哗: '声音大而杂乱。', 喘气: '急促地呼吸。', 辛苦: '身心劳累，付出很多。', 猎人: '以打猎为业或爱好打猎的人。',
@@ -276,8 +329,11 @@ const COMMON_MEANINGS = {
 
 function primaryWordFor(char, source) {
   if (source.group) return source.group;
+  if (CURATED_ADDITIONAL_GLOSSES[char]?.[0]?.[0]) return CURATED_ADDITIONAL_GLOSSES[char][0][0];
   return (COMMON_WORDS[char] || [char])[0];
 }
+
+const PRIMARY_WORD_PINYIN = {"宏大":"hóng dà","柴火":"chái huǒ","罢工":"bà gōng","好哇":"hǎo wa","损害":"sǔn hài","派遣":"pài qiǎn","矮墙":"ǎi qiáng","挺拔":"tǐng bá","蚕丝":"cán sī","宴席":"yàn xí","吱声":"zhī shēng","尘埃":"chén āi","洲际":"zhōu jì","抵抗":"dǐ kàng","茅厕":"máo cè","环境":"huán jìng","铜铃":"tóng líng","边际":"biān jì","基本":"jī běn","陪伴":"péi bàn","赣南":"gàn nán","勉强":"miǎn qiáng","家禽":"jiā qín","凯歌":"kǎi gē","唐代":"táng dài","组成":"zǔ chéng","坑洼":"kēng wā","乃是":"nǎi shì","茫然":"máng rán","纱布":"shā bù","路途":"lù tú","笨重":"bèn zhòng","皱褶":"zhòu zhě","铃声":"líng shēng","气喘":"qì chuǎn","扎根":"zhā gēn","婚礼":"hūn lǐ","已矣":"yǐ yǐ","称谓":"chēng wèi","士兵":"shì bīng","剖析":"pōu xī","棉花":"mián huā","羞耻":"xiū chǐ","亭子":"tíng zǐ","胎生":"tāi shēng","兰花":"lán huā","长辈":"zhǎng bèi","杭菜":"háng cài","陷入":"xiàn rù","亩产":"mǔ chǎn","痊愈":"quán yù","滴水":"dī shuǐ","皇宫":"huáng gōng","杀害":"shā hài","腾飞":"téng fēi","孙子":"sūn zi","荒地":"huāng dì","失眠":"shī mián","哗啦":"huā lā","舅舅":"jiù jiu","哀伤":"āi shāng","老翁":"lǎo wēng","野兽":"yě shòu","素材":"sù cái","浇花":"jiāo huā","挣钱":"zhèng qián","皖江":"wǎn jiāng","棚子":"péng zi","腹泻":"fù xiè","潜力":"qián lì","高塔":"gāo tǎ","托付":"tuō fù","嫁妆":"jià zhuāng","依靠":"yī kào","涌现":"yǒng xiàn","丘陵":"qiū líng","茅草":"máo cǎo","大嫂":"dà sǎo","古寺":"gǔ sì","惯例":"guàn lì","主宰":"zhǔ zǎi","哨兵":"shào bīng","韵律":"yùn lǜ","维持":"wéi chí","郎中":"láng zhong","珍贵":"zhēn guì","某些":"mǒu xiē","陕西":"shǎn xī","浸没":"jìn mò","朱砂":"zhū shā","婆婆":"pó po","姑娘":"gū niang","祭祀":"jì sì","缺少":"quē shǎo","掏出":"tāo chū","猪圈":"zhū juàn","闽南":"mǐn nán","抗争":"kàng zhēng","枕巾":"zhěn jīn","纸屑":"zhǐ xiè"};
 
 function pinyinForWord(word, source) {
   if (source.group === word && source.groupPinyin) return source.groupPinyin;
@@ -289,12 +345,13 @@ function pinyinForWord(word, source) {
     粗鲁: 'cū lǔ', 哭泣: 'kū qì', 卑微: 'bēi wēi', 高亢: 'gāo kàng', 维护: 'wéi hù', 子孙: 'zǐ sūn', 睡眠: 'shuì mián', 寺庙: 'sì miào', 愈发: 'yù fā', 遥远: 'yáo yuǎn',
     铅笔: 'qiān bǐ', 矛盾: 'máo dùn', 枕头: 'zhěn tou', 朱红: 'zhū hóng', 韵味: 'yùn wèi', 蜂蜜: 'fēng mì', 耻辱: 'chǐ rǔ', 吾辈: 'wú bèi', 所谓: 'suǒ wèi', 足矣: 'zú yǐ', 岂能: 'qǐ néng', 勇敢: 'yǒng gǎn', 宴会: 'yàn huì', 凯旋: 'kǎi xuán', 迷人: 'mí rén', 迫切: 'pò qiè', 商贾: 'shāng gǔ', 某人: 'mǒu rén',
   };
-  return known[word] || '';
+  return known[word] || PRIMARY_WORD_PINYIN[word] || '';
 }
 
-const MEANINGS = { ...COMMON_MEANINGS, ...wordMeanings };
+const CURATED_WORD_MEANINGS = Object.fromEntries(Object.values(CURATED_ADDITIONAL_GLOSSES).flat());
+const MEANINGS = { ...COMMON_MEANINGS, ...CURATED_WORD_MEANINGS, ...wordMeanings };
 
-function meaningForWord(word) { return MEANINGS[word] || ''; }
+function meaningForWord(word) { return MEANINGS[word] || vocabMeaningFor(word) || ''; }
 
 function maskWord(word, char, pinyin) {
   if (!word) return `（${pinyin}）`;
@@ -310,36 +367,57 @@ function makeId(item) {
   return `writing.u${unit}.${lessonId}.${item.char}.v1`;
 }
 
+function legacyLessonFor(lesson) {
+  if (lesson === '语文园地六') return '语文园地七';
+  if (lesson === '语文园地七') return '语文园地八';
+  return lesson;
+}
+
+function legacyIdsFor(item) {
+  const legacyLesson = legacyLessonFor(item.lesson);
+  const aliases = legacyWritingItems.reduce((ids, entry, index) => {
+    if (entry.lesson === legacyLesson && entry.char === item.char) ids.push(`writing-${index + 1}-${item.char}`);
+    return ids;
+  }, []);
+  const oldStableId = makeId({ ...item, lesson: legacyLesson });
+  const currentStableId = makeId(item);
+  if (oldStableId !== currentStableId) aliases.push(oldStableId);
+  return [...new Set(aliases)];
+}
+
 function buildAdditionalWords(item, primary) {
   const curated = (CURATED_ADDITIONAL_GLOSSES[item.char] || []).filter(([word]) => word && word !== primary).slice(0, 5);
   if (curated.length >= 3) return curated.map(([text, meaning]) => ({ text, pinyin: pinyinForWord(text, item), meaning }));
   const vocabWords = sourceVocabItems.filter((entry) => entry.word.includes(item.char)).map((entry) => entry.word);
-  const candidates = [...(COMMON_WORDS[item.char] || []), ...(EXTRA_WORDS[item.char] || []), ...(SUPPLEMENTAL_WORDS[item.char] || []), ...vocabWords];
+  const candidates = [...curated.map(([word]) => word), ...(COMMON_WORDS[item.char] || []), ...(EXTRA_WORDS[item.char] || []), ...(SUPPLEMENTAL_WORDS[item.char] || []), ...vocabWords];
   const words = [...new Set(candidates.filter((word) => word && word !== primary))].slice(0, 5);
   while (words.length < 3) {
     const candidate = (COMMON_WORDS[item.char] || []).find((word) => !words.includes(word) && word !== primary);
     if (!candidate) break;
     words.push(candidate);
   }
-  return words.map((word) => ({ text: word, pinyin: pinyinForWord(word, item), meaning: meaningForWord(word) }));
+  return words
+    .map((word) => ({ text: word, pinyin: pinyinForWord(word, item), meaning: meaningForWord(word) }))
+    .filter((entry) => entry.meaning);
 }
 
 export const writingItems = sourceWritingItems.map((item, index) => {
   const primaryWord = primaryWordFor(item.char, item);
   const groupPinyin = item.groupPinyin || pinyinForWord(primaryWord, item) || item.pinyin;
   const unit = unitForLesson(item.lesson);
+  const id = makeId(item);
   return {
     ...item,
-    id: makeId(item),
-    legacyIds: [`writing-${index + 1}-${item.char}`],
-    progressKey: `writing-${index + 1}-${item.char}`,
+    id,
+    legacyIds: legacyIdsFor(item),
+    progressKey: id,
     contentVersion,
     module: 'writing',
     subtype: 'character',
     textbookUnit: unit,
     lessonNumber: normalizeLessonNumber(item.lesson),
     topic: '写字表·生字书写',
-    source: { prompt: '五年级上册《写字表》PDF', answer: '五年级上册《写字表》PDF' },
+    source: { prompt: '五年级上册《写字表》XLSX', answer: '五年级上册《写字表》XLSX' },
     charPinyin: item.pinyin,
     primaryWord,
     primaryWordPinyin: groupPinyin,

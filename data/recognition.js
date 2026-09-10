@@ -1,41 +1,13 @@
-import { recognitionSeeds as legacyRecognitionSeeds, vocabItems as sourceVocabItems } from '../data.js';
-import { contentVersion, unitForLesson } from './catalog.js';
+import { recognitionSeeds as legacyRecognitionSeeds } from '../data.js';
+import { SOURCE_RECOGNITION_ROWS as SOURCE_ROWS, sourceVocabItems } from './source-tables.js';
+import { contentVersion, normalizeLessonNumber, unitForLesson } from './catalog.js';
 import { charMeanings, wordMeanings } from './meanings.js';
 import { CURATED_ADDITIONAL_GLOSSES } from './writing.js';
+import { vocabMeaningFor } from './vocab.js';
 
-// 来源：小学语文五上《识字表》PDF 第 1 页。每个数组保留教材中的课次，
-// 园地条目也保留来源，不将重复出现的字折叠成一个无来源的数组元素。
-const PDF_ROWS = [
-  [1, [['箩', 'luó'], ['杭', 'háng']]],
-  [2, [['亩', 'mǔ'], ['吩', 'fēn'], ['榨', 'zhà'], ['榴', 'liú']]],
-  [3, [['幽', 'yōu'], ['雏', 'chú'], ['哟', 'yō'], ['抚', 'fǔ'], ['陪', 'péi'], ['睑', 'jiǎn']]],
-  [4, [['碉', 'diāo'], ['任', 'rèn'], ['丘', 'qiū'], ['搁', 'gē'], ['拐', 'guǎi'], ['岔', 'chà']]],
-  [5, [['璧', 'bì'], ['臣', 'chén'], ['颇', 'pō'], ['强', 'qiáng'], ['允', 'yǔn'], ['罪', 'zuì'], ['廉', 'lián'], ['御', 'yù'], ['辞', 'cí'], ['擅', 'shàn'], ['卿', 'qīng'], ['削', 'xuē'], ['袍', 'páo']]],
-  [6, [['鸵', 'tuó'], ['冠', 'guàn'], ['隼', 'sǔn'], ['翰', 'hàn'], ['啸', 'xiào']]],
-  [7, [['曼', 'màn'], ['敦', 'dūn'], ['弥', 'mí'], ['伊', 'yī'], ['玛', 'mǎ'], ['葬', 'zàng'], ['剖', 'pōu'], ['裸', 'luǒ'], ['泣', 'qì'], ['艇', 'tǐng'], ['祸', 'huò'], ['岗', 'gǎng'], ['宰', 'zǎi'], ['遣', 'qiǎn'], ['莱', 'lái']]],
-  [8, [['酬', 'chóu'], ['禽', 'qín'], ['誓', 'shì'], ['谎', 'huǎng']]],
-  [9, [['嫂', 'sǎo'], ['舔', 'tiǎn'], ['恳', 'kěn'], ['筛', 'shāi'], ['咧', 'liě'], ['歹', 'dǎi'], ['罕', 'hǎn'], ['惯', 'guàn'], ['梭', 'suō'], ['监', 'jiān'], ['狱', 'yù'], ['酿', 'niàng'], ['瞌', 'kē'], ['落', 'là'], ['腮', 'sāi']]],
-  [10, [['俭', 'jiǎn'], ['逗', 'dòu'], ['偎', 'wēi'], ['珊', 'shān'], ['瑚', 'hú'], ['矫', 'jiǎo'], ['筐', 'kuāng'], ['拗', 'niù']]],
-  [11, [['乃', 'nǎi'], ['邸', 'dǐ'], ['熏', 'xūn'], ['亥', 'hài'], ['恭', 'gōng'], ['恃', 'shì']]],
-  [12, [['鸿', 'hóng'], ['潜', 'qián'], ['渊', 'yuān'], ['惶', 'huáng'], ['胎', 'tāi'], ['履', 'lǚ'], ['载', 'zǎi']]],
-  [13, [['估', 'gū'], ['珑', 'lóng'], ['剔', 'tī'], ['澜', 'lán'], ['瑶', 'yáo'], ['烬', 'jìn']]],
-  [14, [['蓄', 'xù'], ['迫', 'pò'], ['租', 'zū'], ['纠', 'jiū'], ['缠', 'chán'], ['邀', 'yāo'], ['港', 'gǎng'], ['扰', 'rǎo'], ['拒', 'jù'], ['签', 'qiān'], ['订', 'dìng'], ['宁', 'níng'], ['要', 'yào'], ['妄', 'wàng']]],
-  [15, [['殖', 'zhí'], ['煤', 'méi'], ['炭', 'tàn'], ['疗', 'liáo']]],
-  [16, [['埃', 'āi'], ['狭', 'xiá'], ['拥', 'yōng'], ['拽', 'zhuài']]],
-  [17, [['篇', 'piān'], ['魄', 'pò'], ['怂', 'sǒng'], ['涌', 'yǒng'], ['抑', 'yì'], ['颓', 'tuí'], ['纫', 'rèn'], ['噪', 'zào'], ['兜', 'dōu'], ['械', 'xiè'], ['权', 'quán']]],
-  [18, [['茧', 'jiǎn'], ['栈', 'zhàn'], ['冤', 'yuān'], ['枉', 'wǎng'], ['跷', 'qiāo'], ['脾', 'pí'], ['迪', 'dí'], ['撩', 'liāo'], ['嫁', 'jià'], ['缴', 'jiǎo'], ['锡', 'xī'], ['兼', 'jiān'], ['嘲', 'cháo'], ['噜', 'lū'], ['蓬', 'péng']]],
-  [19, [['涟', 'lián'], ['漪', 'yī'], ['凉', 'liáng'], ['轿', 'jiào'], ['肋', 'lēi'], ['趁', 'chèn'], ['辰', 'chén'], ['娩', 'miǎn'], ['尚', 'shàng'], ['憾', 'hàn']]],
-  ['语文园地七', [['孝', 'xiào'], ['喻', 'yù'], ['躁', 'zào'], ['泣', 'qì'], ['弛', 'chí'], ['卑', 'bēi'], ['亢', 'kàng'], ['赋', 'fù'], ['笙', 'shēng'], ['箫', 'xiāo']]],
-  [20, [['瞑', 'míng'], ['维', 'wéi'], ['浣', 'huàn'], ['愈', 'yù'], ['酥', 'sū']]],
-  [21, [['骤', 'zhòu'], ['凛', 'lǐn'], ['咧', 'liě'], ['砥', 'dǐ'], ['屑', 'xiè'], ['瑞', 'ruì'], ['谚', 'yàn'], ['漫', 'màn']]],
-  [22, [['鹭', 'lù'], ['蓑', 'suō'], ['嵌', 'qiàn'], ['匣', 'xiá'], ['嗜', 'shì'], ['澄', 'chéng']]],
-  ['语文园地八', [['湘', 'xiāng'], ['粤', 'yuè'], ['蜀', 'shǔ'], ['沪', 'hù'], ['滇', 'diān'], ['赣', 'gàn'], ['闽', 'mǐn'], ['陕', 'shǎn'], ['窑', 'yáo'], ['皖', 'wǎn']]],
-  [23, [['耻', 'chǐ'], ['识', 'zhì'], ['吾', 'wú'], ['矣', 'yǐ']]],
-  [24, [['舅', 'jiù'], ['斩', 'zhǎn'], ['眩', 'xiàn'], ['凯', 'kǎi'], ['葛', 'gě'], ['述', 'shù'], ['传', 'zhuàn'], ['煞', 'shà'], ['勉', 'miǎn'], ['寇', 'kòu'], ['贾', 'jiǎ'], ['刊', 'kān'], ['琐', 'suǒ'], ['榜', 'bǎng'], ['呻', 'shēn'], ['某', 'mǒu']]],
-  [25, [['侣', 'lǚ'], ['娱', 'yú'], ['趋', 'qū'], ['悉', 'xī']]],
-];
+// 来源：附件 XLSX 的识字表。逐条保留教材课次与语文园地归属。
 
-// PDF 中使用蓝色标出的是旧识字/本课多音字；它们不计入 200 个新字。
+// 附件说明这 9 条是旧识字/本课多音字，不计入 200 个新字。
 const REVIEW_PRONUNCIATIONS = new Set(['任', '强', '削', '冠', '落', '宁', '要', '识', '传']);
 
 const EXTRA_GROUPS = {
@@ -237,6 +209,48 @@ const RECOGNITION_GROUP_GLOSSES = {
   趋: [['趋势', '事物发展的方向。'], ['趋向', '朝着某个方向发展。'], ['趋利避害', '追求有利的，躲避有害的。']],
 };
 
+// Entries restored by the supplied XLSX. A few uncommon characters have fewer
+// than three natural compounds; those stay short instead of using made-up words.
+Object.assign(RECOGNITION_GROUP_GLOSSES, {
+  嚓: [['喀嚓', '形容物体折断等发出的声音。'], ['咔嚓', '形容物体断裂或相机快门等发出的声音。'], ['啪嚓', '形容东西落地、撞击或破裂的声音。']],
+  嗒: [['嘀嗒', '形容钟表摆动或雨水滴落的声音。'], ['吧嗒', '形容物体落下、嘴吸动等发出的声音。'], ['咔嗒', '形容物体轻微碰撞发出的声音。']],
+  泻: [['倾泻', '大量的水很快地从高处流下。'], ['腹泻', '排便次数增多且粪便稀薄。'], ['一泻千里', '江河奔流直下；也形容文笔奔放流畅。']],
+  侵: [['侵略', '侵犯别国领土、主权并进行掠夺。'], ['侵犯', '非法干涉或损害别人的权利。'], ['侵入', '进入并侵犯。']],
+  缶: [['击缶', '敲击瓦制的缶来伴奏。'], ['瓦缶', '用陶土烧成的缶。'], ['陶缶', '陶制的盛器或打击乐器。']],
+  瀚: [['浩瀚', '广大，繁多。'], ['瀚海', '古代指北方的湖泊或沙漠。'], ['瀚漫', '广大而没有边际。']],
+  呛: [['呛水', '水进入呼吸道而引起咳嗽。'], ['呛人', '气味或烟尘刺激呼吸，使人难受。'], ['呛咳', '因异物或刺激进入气管而咳嗽。']],
+  秩: [['秩序', '有条理、不混乱的状况。'], ['秩次', '按次序排列。'], ['秩序井然', '有条理，整齐不乱。']],
+  嘈: [['嘈杂', '声音杂乱、喧闹。'], ['嘈嘈', '形容声音喧闹。'], ['嘈乱', '声音杂乱而喧闹。']],
+  殴: [['殴打', '用手或器具打人。'], ['斗殴', '互相打架。'], ['群殴', '多人参与的殴斗。']],
+  塌: [['倒塌', '建筑物等倒下来。'], ['塌陷', '往下陷；沉陷。'], ['塌实', '安定；放心，也作“踏实”。']],
+  纱: [['纱布', '包扎伤口等使用的稀疏棉织品。'], ['纱窗', '钉有纱网、用来通风防虫的窗。'], ['纱巾', '用薄纱制成的头巾或围巾。']],
+  礁: [['礁石', '江河、海洋中由岩石或珊瑚形成的障碍物。'], ['暗礁', '水面下的礁石；也比喻潜在的障碍。'], ['触礁', '船碰到礁石；也比喻事情遇到障碍。']],
+  龚: [['龚姓', '以“龚”为姓。'], ['姓龚', '姓氏是龚。']],
+  疆: [['边疆', '靠近国界的领土。'], ['疆土', '一个国家的领土。'], ['新疆', '我国的自治区名称。']],
+  玲: [['玲珑', '精巧细致；也指人灵活敏捷。'], ['玲玲', '形容玉石碰击的清越声音。'], ['小巧玲珑', '形容东西小而精致。']],
+  剃: [['剃头', '用剃刀刮去头发。'], ['剃须', '刮去胡须。'], ['剃刀', '剃除毛发用的刀。']],
+  烫: [['烫伤', '高温物体或液体造成的损伤。'], ['滚烫', '非常烫。'], ['烫手', '手碰上去感到很热；也比喻难以处理。']],
+  甬: [['甬道', '楼房之间或墓道中的通道。'], ['甬路', '庭院或花园中用砖石铺成的路。'], ['甬江', '流经浙江宁波的一条河流。']],
+  黏: [['黏土', '有黏性的土。'], ['黏液', '黏稠的液体。'], ['黏合', '用有黏性的物质使物体结合。']],
+  恿: [['怂恿', '鼓动别人做某事，多指不好的事。']],
+  惫: [['疲惫', '非常疲乏。'], ['困惫', '困倦疲惫。'], ['衰惫', '衰弱疲惫。']],
+  僻: [['偏僻', '离城市或中心区远，交通不便。'], ['僻静', '偏僻而安静。'], ['生僻', '不常见，不熟悉。']],
+  篷: [['帐篷', '撑在地上遮蔽风雨、日光的设备。'], ['船篷', '小船上遮蔽风雨和日光的篷。'], ['篷布', '做篷用的结实帆布。']],
+  谅: [['原谅', '对人的过失不责备。'], ['体谅', '设身处地为别人着想。'], ['谅解', '了解实情后消除意见。']],
+  铠: [['铠甲', '古代军人作战时穿的护身服装。'], ['铁铠', '铁制的铠甲。'], ['披铠', '穿上铠甲。']],
+  赴: [['奔赴', '奔向某个地方。'], ['赴约', '去和约会的人见面。'], ['全力以赴', '把全部力量投入进去。']],
+  姥: [['姥姥', '外祖母。'], ['姥爷', '外祖父。'], ['老姥', '年老的妇女。']],
+  淖: [['泥淖', '烂泥；也比喻困境。'], ['淖泥', '稀烂的泥。']],
+  暝: [['暝色', '暮色。'], ['薄暝', '傍晚，天将黑的时候。'], ['晦暝', '昏暗。']],
+  冽: [['凛冽', '寒冷刺骨。'], ['寒冽', '寒冷。'], ['冽冽', '寒冷的样子。']],
+  咯: [['咯咯', '形容笑声或禽鸟叫声。'], ['咯噔', '形容短促而响亮的声音。'], ['吱咯', '形容物体受压或摩擦的声音。']],
+  吱: [['吱声', '出声；说话。'], ['嘎吱', '形容物体受压或摩擦时发出的声音。'], ['吱呀', '形容门窗等开合时发出的声音。']],
+  馒: [['馒头', '一种用发酵面粉蒸成的食品。'], ['馒首', '馒头的古称。'], ['甜馒头', '带有甜味的馒头。']],
+  论: [['《论语》', '记录孔子及其弟子言行的儒家经典。']],
+  栩: [['栩栩如生', '形容艺术形象非常生动，像活的一样。'], ['栩栩', '形容生动活泼的样子。']],
+  趟: [['一趟', '一回；一番。'], ['趟次', '来往的次数。'], ['赶趟儿', '赶得上时机；也指来得及。']],
+});
+
 const RECOGNITION_GROUPS = Object.fromEntries(Object.entries(RECOGNITION_GROUP_GLOSSES).map(([char, entries]) => [char, entries.map(([word]) => word)]));
 const RECOGNITION_GROUP_MEANINGS = Object.fromEntries(Object.values(RECOGNITION_GROUP_GLOSSES).flat());
 
@@ -255,38 +269,49 @@ function lessonLabel(value) {
 
 function makeId(lesson, char) {
   const unit = unitForLesson(lesson) || 0;
-  const lessonPart = typeof lesson === 'number' ? `l${String(lesson).padStart(2, '0')}` : `g${unit}`;
+  const lessonNumber = normalizeLessonNumber(lesson);
+  const lessonPart = lessonNumber ? `l${String(lessonNumber).padStart(2, '0')}` : `g${unit}`;
   return `recognition.u${unit}.${lessonPart}.${char}.v1`;
 }
 
-const flattened = PDF_ROWS.flatMap(([lesson, entries]) => entries.map(([char, pinyin], index) => ({ lesson, char, pinyin, index })));
+const flattened = SOURCE_ROWS
+  .flatMap(([lesson, entries]) => entries.map(([char, pinyin]) => ({ lesson, char, pinyin })))
+  .map((item, index) => ({ ...item, index }));
 
-const legacyIdsFor = (char, pinyin) => legacyRecognitionSeeds.reduce((ids, [legacyChar, legacyPinyin], index) => {
-  if (legacyChar === char && legacyPinyin === pinyin) ids.push(`recognition-${index + 1}-${char}`);
-  return ids;
-}, []);
+const legacyIdsFor = (char, pinyin, lesson) => {
+  const ids = legacyRecognitionSeeds.reduce((aliases, [legacyChar, legacyPinyin], index) => {
+    if (legacyChar === char && legacyPinyin === pinyin) aliases.push(`recognition-${index + 1}-${char}`);
+    return aliases;
+  }, []);
+  const legacyLesson = lesson === '语文园地六' ? '语文园地七' : lesson === '语文园地七' ? '语文园地八' : lesson;
+  const oldStableId = makeId(legacyLesson, char);
+  const currentStableId = makeId(lesson, char);
+  if (oldStableId !== currentStableId) ids.push(oldStableId);
+  return [...new Set(ids)];
+};
 
 export const recognitionItems = flattened.map(({ lesson, char, pinyin, index }) => {
   const review = REVIEW_PRONUNCIATIONS.has(char);
   const groups = groupsFor(char, pinyin);
   const unit = unitForLesson(lesson);
+  const id = makeId(lesson, char);
   return {
-    id: makeId(lesson, char),
-    legacyIds: legacyIdsFor(char, pinyin),
-    progressKey: `recognition-${index + 1}-${char}`,
+    id,
+    legacyIds: legacyIdsFor(char, pinyin, lesson),
+    progressKey: id,
     contentVersion,
     module: 'recognition',
     subtype: 'character',
     char,
     pinyin,
     textbookUnit: unit,
-    lessonNumber: typeof lesson === 'number' ? lesson : null,
+    lessonNumber: normalizeLessonNumber(lesson),
     lesson: lessonLabel(lesson),
     topic: review ? '识字表·多音字复习' : '识字表·生字认读',
-    source: { prompt: '五年级上册《识字表》PDF', answer: '五年级上册《识字表》PDF' },
+    source: { prompt: '五年级上册《识字表》XLSX', answer: '五年级上册《识字表》XLSX' },
     group: groups[0],
     groups,
-    meanings: groups.map((word) => wordMeanings[word] || RECOGNITION_GROUP_MEANINGS[word] || charMeanings[char] || ''),
+    meanings: groups.map((word) => wordMeanings[word] || RECOGNITION_GROUP_MEANINGS[word] || vocabMeaningFor(word) || charMeanings[char] || ''),
     isReviewPronunciation: review,
   };
 });
@@ -299,18 +324,17 @@ export const recognitionStats = {
   totalPractice: recognitionItems.length,
 };
 
-// The PDF prints “共200个生字”, while its visible table has 218 rows: 9 blue
-// review/multi-tone rows, 209 black rows, and 207 distinct black characters.
-// Keep both measurements instead of deleting rows to force the printed total.
+// The supplied workbook contains 209 practice rows. Its note identifies 200
+// new characters plus 9 review/multi-tone entries, all of which remain cards.
 export const recognitionAudit = {
   pdfDeclaredNewCharacters: 200,
   tableRows: recognitionItems.length,
   blueReviewRows: recognitionItems.filter((item) => item.isReviewPronunciation).length,
   blackRows: recognitionItems.filter((item) => !item.isReviewPronunciation).length,
   distinctBlackCharacters: newCharacters.size,
-  duplicateBlackCharacters: ['泣', '咧'],
+  duplicateBlackCharacters: [],
   unexplainedDeclaredGap: newCharacters.size - 200,
-  note: '附件脚注说明蓝色为已学/多音字，不计入200个新字；表格逐行保留，差异待教材编校版本确认。',
+  note: '附件共列出209条，其中200个新字、9条复习或多音字；已逐行保留。',
 };
 
 Object.assign(recognitionStats, {
@@ -321,4 +345,4 @@ Object.assign(recognitionStats, {
   unexplainedDeclaredGap: recognitionAudit.unexplainedDeclaredGap,
 });
 
-export { PDF_ROWS };
+export { SOURCE_ROWS as PDF_ROWS };

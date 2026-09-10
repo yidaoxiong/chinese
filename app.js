@@ -204,7 +204,7 @@ function selectModule(moduleId) {
   const audit = $('recognitionAudit');
   $('characterCategoryControl').classList.toggle('hidden', moduleId !== 'characters');
   if (moduleId === 'characters') {
-    audit.textContent = `附件标注“共${recognitionAudit.pdfDeclaredNewCharacters}个生字”；当前逐行保留 ${recognitionStats.tableRows} 条（黑字 ${recognitionStats.blackRows} 条、去重 ${recognitionStats.distinctBlackCharacters} 字，蓝色复习/多音字 ${recognitionStats.reviewPronunciations} 条）。黑字去重与PDF声明相差 ${recognitionStats.unexplainedDeclaredGap} 字，已保留审计，不删行凑数。`;
+    audit.textContent = `附件识字表共 ${recognitionStats.tableRows} 条：${recognitionAudit.pdfDeclaredNewCharacters} 个新字，另有 ${recognitionStats.reviewPronunciations} 条复习或多音字；已按附件逐条保留。`;
     audit.classList.remove('hidden');
   } else audit.classList.add('hidden');
   $('reverseGardenControl').classList.toggle('hidden', moduleId !== 'garden');

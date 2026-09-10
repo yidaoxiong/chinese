@@ -2,7 +2,7 @@
  * 五年级上册教材目录。题库的筛选范围以这里的教材单元/课文为准，
  * 不把“第几条数组元素”当作内容身份。
  */
-export const contentVersion = '2026-fall-v1';
+export const contentVersion = '2026-fall-v2';
 
 export const textbookUnits = [
   { id: 'u1', number: 1, title: '第一单元', lessons: [
