@@ -262,6 +262,7 @@ function showCurrentCard() {
   $('answerText').textContent = question.answer;
   $('answerReveal').classList.add('hidden');
   $('showAnswerButton').classList.remove('hidden');
+  $('showAnswerButton').disabled = card.module === 'writing';
   $('writingPrompt').classList.toggle('hidden', card.module !== 'writing');
   $('secondWritingBlock').classList.toggle('hidden', card.module !== 'writing');
   $('firstHandwritingButton').disabled = false;
